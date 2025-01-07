@@ -1,5 +1,5 @@
 # GIP2024Dynamometer
-GIP code for our dynamometer project 2024.
+GIP code for our Dynamometer project 2024.
 
 This Repo contains test results, code etc. pertaining to our GIP creating a desktop dynamometer for <1kW electric motors. 
 
