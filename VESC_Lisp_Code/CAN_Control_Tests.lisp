@@ -89,3 +89,5 @@
         (if (= btn-now 6) (def btn-now 7)) ; Index 6 is missing, so skip it
         (if (> btn-now 7) (def btn-now 1))
 })
+
+// yo
