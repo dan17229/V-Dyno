@@ -29,9 +29,12 @@
 ; Enable the CAN event for standard ID (SID) frames
 (event-enable 'event-can-sid)
 
-(loopwhile t
-    (progn
-        (print "running ")
-        (sleep 5.0)
-    )
-)
+(loopwhile t {
+        (set-btn-leds btn-now 1 4 1)
+        (sleep 1.5)
+        (set-btn-leds btn-now 0 0 0)
+        
+        (setq btn-now (+ btn-now 1))
+        (if (= btn-now 6) (def btn-now 7)) ; Index 6 is missing, so skip it
+        (if (> btn-now 7) (def btn-now 1))
+})
