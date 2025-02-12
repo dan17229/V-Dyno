@@ -1,8 +1,12 @@
+import os
+
+# Change the working directory to the directory of the script
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 import can
 import cantools
-from test_cases import *  # import all test cases
+import test_cases.test_cases
 import time
-
 
 # sending a single CAN message
 def single_send(message):
@@ -41,7 +45,7 @@ def main():
 
 if __name__ == "__main__":
     bus = can.Bus(interface='seeedstudio',
-                            channel='COM4',
+                            channel='COM9',
                             baudrate=2000000,
                             bitrate=500000)
     db = cantools.db.load_file('VESC.dbc')
