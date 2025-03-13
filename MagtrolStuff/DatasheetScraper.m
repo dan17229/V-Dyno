@@ -51,17 +51,17 @@ xlabel("Rotational Speed (rpm)");
 ylabel("Torque (N\cdot{}m)");
 grid on
 grid minor
-lgd = legend(["Hysteresis (HD705)","Powder Brake (2PB43)","Eddy-Current (2WB43)"],'Location','northeast',"box","off");
-title(lgd,'Dynamometer Brake Technology')
+%lgd = legend(["Hysteresis (HD705)","Powder Brake (2PB43)","Eddy-Current (2WB43)"],'Location','northeast',"box","off");
+%title(lgd,'Dynamometer Brake Technology')
 
 xlim([10^0, 10^5])
-ylim([10^-2, 10^3])
+ylim([10^-2, 10^2])
 
 % Set tick values and labels
 xticks([1, 10, 100, 1000, 10000, 100000])
 xticklabels({'1', '10', '100', '1000', '10,000', '100,000'})
-yticks([0.01, 0.1, 1, 10, 100, 1000])
-yticklabels({'0.01', '0.1', '1', '10', '100', '1000'})
+yticks([0.01, 0.1, 1, 10, 100])
+yticklabels({'0.01', '0.1', '1', '10', '100'})
 
 % Set logarithmic scales
 set(gca, 'XScale', 'log')
