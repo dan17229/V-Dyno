@@ -23,13 +23,41 @@ app = QtWidgets.QApplication([])            # you MUST do this once (initialize 
 
 win = pg.GraphicsLayoutWidget(show=True, title="Dyno Realtime") # creates a window
 
+# Input boxes
+input_layout = QtWidgets.QVBoxLayout()
+input_widget = QtWidgets.QWidget()
+input_widget.setLayout(input_layout)
+
+rpm_label = QtWidgets.QLabel("Motor 1 RPM:")
+rpm_input = QtWidgets.QSpinBox()
+rpm_input.setRange(0, 1000)  # Set the range for RPM input
+rpm_input.setSingleStep(10)  # Set the step size for duty cycle input
+rpm_input.setValue(0)  # Set a default value
+
+brake_current_label = QtWidgets.QLabel("Motor 2 brake current:")
+brake_current_input = QtWidgets.QDoubleSpinBox()
+brake_current_input.setRange(-5.0, 5.0)  # Set the range for duty cycle input
+brake_current_input.setSingleStep(0.1)  # Set the step size for duty cycle input
+brake_current_input.setValue(0)  # Set a default value
+
+input_layout.addWidget(rpm_label)
+input_layout.addWidget(rpm_input)
+input_layout.addWidget(brake_current_label)
+input_layout.addWidget(brake_current_input)
+
+# Create a proxy widget to embed the QWidget into the GraphicsLayoutWidget
+proxy = QtWidgets.QGraphicsProxyWidget()
+proxy.setWidget(input_widget)
+
+# Add the proxy widget to the GraphicsLayoutWidget
+win.addItem(proxy, row=0, col=0)
+
 # First plot
-p1 = win.addPlot(title="M.U.T Current")  # creates empty space for the first plot in the window
+p1 = win.addPlot(title="M.U.T RPM", row=0, col=1)  # creates empty space for the first plot in the window
 curve1 = p1.plot()                         # create an empty "plot" (a curve to plot)
 
 # Second plot
-win.nextRow()                              # move to the next row in the layout
-p2 = win.addPlot(title="Generator Current")  # creates empty space for the second plot in the window
+p2 = win.addPlot(title="Generator Brake Current", row=1, col=1)  # creates empty space for the second plot in the window
 curve2 = p2.plot()                         # create an empty "plot" (a curve to plot)
 
 windowWidth = 500                          # width of the window displaying the curve
@@ -48,43 +76,47 @@ tester = cantools.tester.Tester('VESC1',
                                 can_bus)
 tester.start()
 
+pole_pairs = 7
+
 # Realtime data plot. Each time this function is called, the data display is updated
 def update():
-    global ptr, Xm1, Xm2
-    tester.send('VESC_Command_RPM_V1', {'Command_RPM_V1': 1500})
+    global ptr, Xm1, Xm2, brake_current
+    try:
+        rpm_value = rpm_input.value()  # Use value() instead of text()
+    except ValueError:
+        rpm_value = 0  # default value if input is invalid
+    try:
+        brake_current = brake_current_input.value()
+    except ValueError:
+        brake_current = 0  # default value if input is invalid
+
+    if rpm_value > 0:
+        rpm_value = rpm_value * pole_pairs
+        tester.send('VESC_Command_RPM_V1', {'Command_RPM_V1': rpm_value})
+    tester.send('VESC_Command_AbsBrakeCurrent_V2', {'Command_BrakeCurrent_V2': brake_current})
     status1 = tester.expect('VESC_Status1_V1', None, timeout=.01, discard_other_messages=True)
     status2 = tester.expect('VESC_Status1_V2', None, timeout=.01, discard_other_messages=True)
-    #print(status2)
     if status1 is not None:
-        plotGraph(curve1, Xm1, status1, 'Status_TotalCurrent_V1')
+        plotGraph(curve1, Xm1, status1, 'Status_RPM_V1',(1/pole_pairs))
     if status2 is not None:
         plotGraph(curve2, Xm2, status2, 'Status_TotalCurrent_V2')
+    QtWidgets.QApplication.processEvents() # you MUST process the plot now
 
-def plotGraph(curve, Xm, status, key):
+def plotGraph(curve, Xm, status, key,scaling=1):
     global ptr
-    status[key] /= 10
     Xm[:-1] = Xm[1:]                      # shift data in the temporal mean 1 sample left
     value = status[key]                   # read line (single value) from the serial port
+    value = value * scaling
     Xm[-1] = float(value)                 # vector containing the instantaneous values      
     ptr += 1                              # update x position for displaying the curve
     curve.setData(Xm)                     # set the curve with this data
     curve.setPos(ptr, 0)                  # set x position in the graph to 0
     QtWidgets.QApplication.processEvents() # you MUST process the plot now
 
-class KeyPressHandler(QtCore.QObject):
-    def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.KeyPress:
-            if event.key() == QtCore.Qt.Key_Up:
-                tester.send('VESC_Command_DutyCycle_V2', {'Command_DutyCycle_V2': 0.2})
-                return True
-        return super().eventFilter(obj, event)
-
-keyPressHandler = KeyPressHandler()
-app.installEventFilter(keyPressHandler)
-
 ### MAIN PROGRAM #####    
 # this is a brutal infinite loop calling your realtime data plot
-while True: update()
+while True:
+    update()
 
 ### END QtApp ####
 pg.QtWidgets.QApplication.exec_() # you MUST put this at the end
