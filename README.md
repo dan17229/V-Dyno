@@ -8,6 +8,12 @@ This Repo contains test results, code etc. pertaining to our GIP creating a desk
 make sure to run:
 pip install requirements.txt
 
+## \CAN
+### \DANCANServer
+Contains the GUI and CAN control to run the motors and get results
+### \TeensyTorqueSensor
+Contains C code to turn a Teensy 3.6 into an ADC - CAN message device using the Waveshare CAN Board SN65HVD230.
+
 ## \Motor Characterisation
 Contains the results from two tests carried out where Trampa 6340 motors were rotated externally and their back EMF recorded. The second experiment, carried out on the 17th of December 2024 is trusted over the former performed on the 13th, due to the use of a drill achieving higher speeds and therefore a greater voltage, signal to noise and error rejection etc... The first test results are stored in a folder headed OBSOLETE_Back_EMF_Data_Hand.
 

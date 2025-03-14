@@ -1,1 +1,5 @@
 python-can==4.5.0
+numpy==1.24.4
+pyqtgraph==0.13.3
+pyserial==3.5
+cantools==36.6.0
