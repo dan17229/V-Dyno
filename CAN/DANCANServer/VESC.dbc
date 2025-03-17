@@ -36,6 +36,12 @@ BS_:
 BU_: VESC1 VESC2 VESC3 VESC4 VESC5 VESC6 VESC7 VESC8 Main_ECU
 
 
+BO_ 3221225472 VECTOR__INDEPENDENT_SIG_MSG: 0 Vector__XXX
+ SG_ TorqueValue : 7|8@0+ (1,0) [0|0] "V" Vector__XXX
+ SG_ TorqueValue : 9|10@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ TorqueValue : 7|8@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ TorqueValue : 15|16@0+ (1,0) [0|0] "" Vector__XXX
+
 BO_ 2147486728 VESC_Command_AbsHBrakeCurrent_V8: 8 Main_ECU
  SG_ Command_HBrakeCurrent_V8 : 7|32@0- (0.001,0) [-2147483.648|2147483.647] "mA"  VESC8
 
@@ -122,12 +128,12 @@ BO_ 2147487745 VESC_Status4_V1: 8 VESC1
  SG_ Status_PIDPos_V1 : 55|16@0- (0.02,0) [-655.36|655.34] ""  Main_ECU
 
 BO_ 2147487489 VESC_Status3_V1: 8 VESC1
- SG_ Status_WattHoursCharged_V1 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
- SG_ Status_WattHours_V1 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHoursCharged_V1 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHours_V1 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
 
 BO_ 2147487233 VESC_Status2_V1: 8 VESC1
- SG_ Status_AmpHoursCharged_V1 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
- SG_ Status_AmpHours_V1 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHoursCharged_V1 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHours_V1 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
 
 BO_ 2147485953 VESC_Status1_V1: 8 VESC1
  SG_ Status_RPM_V1 : 7|32@0- (1,0) [-2147483648|2147483647] "RPM"  Main_ECU
@@ -175,12 +181,12 @@ BO_ 2147487746 VESC_Status4_V2: 8 VESC2
  SG_ Status_PIDPos_V2 : 55|16@0- (0.02,0) [-655.36|655.34] ""  Main_ECU
 
 BO_ 2147487490 VESC_Status3_V2: 8 VESC2
- SG_ Status_WattHoursCharged_V2 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
- SG_ Status_WattHours_V2 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHoursCharged_V2 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHours_V2 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
 
 BO_ 2147487234 VESC_Status2_V2: 8 VESC2
- SG_ Status_AmpHoursCharged_V2 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
- SG_ Status_AmpHours_V2 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHoursCharged_V2 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHours_V2 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
 
 BO_ 2147485954 VESC_Status1_V2: 8 VESC2
  SG_ Status_RPM_V2 : 7|32@0- (1,0) [-2147483648|2147483647] "RPM"  Main_ECU
@@ -228,12 +234,12 @@ BO_ 2147487747 VESC_Status4_V3: 8 VESC3
  SG_ Status_PIDPos_V3 : 55|16@0- (0.02,0) [-655.36|655.34] ""  Main_ECU
 
 BO_ 2147487491 VESC_Status3_V3: 8 VESC3
- SG_ Status_WattHoursCharged_V3 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
- SG_ Status_WattHours_V3 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHoursCharged_V3 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHours_V3 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
 
 BO_ 2147487235 VESC_Status2_V3: 8 VESC3
- SG_ Status_AmpHoursCharged_V3 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
- SG_ Status_AmpHours_V3 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHoursCharged_V3 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHours_V3 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
 
 BO_ 2147485955 VESC_Status1_V3: 8 VESC3
  SG_ Status_RPM_V3 : 7|32@0- (1,0) [-2147483648|2147483647] "RPM"  Main_ECU
@@ -281,12 +287,12 @@ BO_ 2147487748 VESC_Status4_V4: 8 VESC4
  SG_ Status_PIDPos_V4 : 55|16@0- (0.02,0) [-655.36|655.34] ""  Main_ECU
 
 BO_ 2147487492 VESC_Status3_V4: 8 VESC4
- SG_ Status_WattHoursCharged_V4 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
- SG_ Status_WattHours_V4 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHoursCharged_V4 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHours_V4 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
 
 BO_ 2147487236 VESC_Status2_V4: 8 VESC4
- SG_ Status_AmpHoursCharged_V4 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
- SG_ Status_AmpHours_V4 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHoursCharged_V4 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHours_V4 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
 
 BO_ 2147485956 VESC_Status1_V4: 8 VESC4
  SG_ Status_RPM_V4 : 7|32@0- (1,0) [-2147483648|2147483647] "RPM"  Main_ECU
@@ -334,12 +340,12 @@ BO_ 2147487749 VESC_Status4_V5: 8 VESC5
  SG_ Status_PIDPos_V5 : 55|16@0- (0.02,0) [-655.36|655.34] ""  Main_ECU
 
 BO_ 2147487493 VESC_Status3_V5: 8 VESC5
- SG_ Status_WattHoursCharged_V5 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
- SG_ Status_WattHours_V5 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHoursCharged_V5 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHours_V5 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
 
 BO_ 2147487237 VESC_Status2_V5: 8 VESC5
- SG_ Status_AmpHoursCharged_V5 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
- SG_ Status_AmpHours_V5 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHoursCharged_V5 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHours_V5 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
 
 BO_ 2147485957 VESC_Status1_V5: 8 VESC5
  SG_ Status_RPM_V5 : 7|32@0- (1,0) [-2147483648|2147483647] "RPM"  Main_ECU
@@ -387,12 +393,12 @@ BO_ 2147487750 VESC_Status4_V6: 8 VESC6
  SG_ Status_PIDPos_V6 : 55|16@0- (0.02,0) [-655.36|655.34] ""  Main_ECU
 
 BO_ 2147487494 VESC_Status3_V6: 8 VESC6
- SG_ Status_WattHoursCharged_V6 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
- SG_ Status_WattHours_V6 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHoursCharged_V6 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHours_V6 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
 
 BO_ 2147487238 VESC_Status2_V6: 8 VESC6
- SG_ Status_AmpHoursCharged_V6 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
- SG_ Status_AmpHours_V6 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHoursCharged_V6 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHours_V6 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
 
 BO_ 2147485958 VESC_Status1_V6: 8 VESC6
  SG_ Status_RPM_V6 : 7|32@0- (1,0) [-2147483648|2147483647] "RPM"  Main_ECU
@@ -440,12 +446,12 @@ BO_ 2147487751 VESC_Status4_V7: 8 VESC7
  SG_ Status_PIDPos_V7 : 55|16@0- (0.02,0) [-655.36|655.34] ""  Main_ECU
 
 BO_ 2147487495 VESC_Status3_V7: 8 VESC7
- SG_ Status_WattHoursCharged_V7 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
- SG_ Status_WattHours_V7 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHoursCharged_V7 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHours_V7 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
 
 BO_ 2147487239 VESC_Status2_V7: 8 VESC7
- SG_ Status_AmpHoursCharged_V7 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
- SG_ Status_AmpHours_V7 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHoursCharged_V7 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHours_V7 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
 
 BO_ 2147485959 VESC_Status1_V7: 8 VESC7
  SG_ Status_RPM_V7 : 7|32@0- (1,0) [-2147483648|2147483647] "RPM"  Main_ECU
@@ -493,12 +499,12 @@ BO_ 2147487752 VESC_Status4_V8: 8 VESC8
  SG_ Status_PIDPos_V8 : 55|16@0- (0.02,0) [-655.36|655.34] ""  Main_ECU
 
 BO_ 2147487496 VESC_Status3_V8: 8 VESC8
- SG_ Status_WattHoursCharged_V8 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
- SG_ Status_WattHours_V8 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHoursCharged_V8 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
+ SG_ Status_WattHours_V8 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Wh"  Main_ECU
 
 BO_ 2147487240 VESC_Status2_V8: 8 VESC8
- SG_ Status_AmpHoursCharged_V8 : 39|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
- SG_ Status_AmpHours_V8 : 7|32@0- (1E-005,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHoursCharged_V8 : 39|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
+ SG_ Status_AmpHours_V8 : 7|32@0- (1e-05,0) [-21474.83648|21474.83647] "Ah"  Main_ECU
 
 BO_ 2147485960 VESC_Status1_V8: 8 VESC8
  SG_ Status_RPM_V8 : 7|32@0- (1,0) [-2147483648|2147483647] "RPM"  Main_ECU
@@ -507,6 +513,9 @@ BO_ 2147485960 VESC_Status1_V8: 8 VESC8
 
 BO_ 2147483656 VESC_Command_DutyCycle_V8: 4 Main_ECU
  SG_ Command_DutyCycle_V8 : 7|32@0- (0.001,0) [-100|100] "%"  Main_ECU
+
+BO_ 2147483673 TEENSY_Status: 2 Vector__XXX
+ SG_ TorqueValue : 1|10@0+ (1,0) [0|0] "" Vector__XXX
 
 
 

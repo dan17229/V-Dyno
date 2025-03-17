@@ -60,9 +60,14 @@ curve1 = p1.plot()                         # create an empty "plot" (a curve to 
 p2 = win.addPlot(title="Generator Brake Current", row=1, col=1)  # creates empty space for the second plot in the window
 curve2 = p2.plot()                         # create an empty "plot" (a curve to plot)
 
+# Second plot
+p3 = win.addPlot(title="Torque Sensor Reading", row=3, col=1)  # creates empty space for the third plot in the window
+curve3 = p3.plot()                         # create an empty "plot" (a curve to plot)
+
 windowWidth = 500                          # width of the window displaying the curve
 Xm1 = linspace(0, 0, windowWidth)          # create array that will contain the relevant time series for plot 1
 Xm2 = linspace(0, 0, windowWidth)          # create array that will contain the relevant time series for plot 2
+Xm3 = linspace(0, 0, windowWidth)          # create array that will contain the relevant time series for plot 3
 ptr = -windowWidth                         # set first x position
 
 can_bus = can.interface.Bus(interface='seeedstudio',
@@ -80,7 +85,7 @@ pole_pairs = 7
 
 # Realtime data plot. Each time this function is called, the data display is updated
 def update():
-    global ptr, Xm1, Xm2, brake_current
+    global ptr, Xm1, Xm2, Xm3, brake_current
     try:
         rpm_value = rpm_input.value()  # Use value() instead of text()
     except ValueError:
@@ -96,10 +101,13 @@ def update():
     tester.send('VESC_Command_AbsBrakeCurrent_V2', {'Command_BrakeCurrent_V2': brake_current})
     status1 = tester.expect('VESC_Status1_V1', None, timeout=.01, discard_other_messages=True)
     status2 = tester.expect('VESC_Status1_V2', None, timeout=.01, discard_other_messages=True)
+    status3 = tester.expect('TEENSY_Status', None, timeout=.01, discard_other_messages=True)
     if status1 is not None:
         plotGraph(curve1, Xm1, status1, 'Status_RPM_V1',(1/pole_pairs))
     if status2 is not None:
         plotGraph(curve2, Xm2, status2, 'Status_TotalCurrent_V2')
+    if status3 is not None:
+        plotGraph(curve3, Xm3, status3, 'TorqueValue')
     QtWidgets.QApplication.processEvents() # you MUST process the plot now
 
 def plotGraph(curve, Xm, status, key,scaling=1):
