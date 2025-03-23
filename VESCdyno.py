@@ -1,147 +1,159 @@
-
+"""
+Written by Joshua Willman
+Featured in "Modern Pyqt - Create GUI Applications for Project Management, Computer Vision, and Data Analysis"
+"""
 # Import necessary modules
-import sys, csv
-import numpy as np
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel, 
-    QSlider, QComboBox, QPushButton, QCheckBox, QToolBox, QDockWidget, QHBoxLayout, QVBoxLayout, QAction)
-from PyQt5.QtDataVisualization import (Q3DBars, QBarDataItem, QBar3DSeries, 
-    QValue3DAxis, QAbstract3DSeries, QAbstract3DGraph, Q3DCamera, Q3DTheme)
-from PyQt5.QtCore import Qt, QObject, pyqtSignal
-from GUI.Styles.StyleSheet import style_sheet
-
-
+import sys, csv, random
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QComboBox, QCheckBox, QFormLayout, QDockWidget, QTableView, QHeaderView, QGraphicsView
+from PyQt6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPainter, QColor, QStandardItemModel, QStandardItem
 import os
 
 # Change the current working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-class GraphModifier(QObject):
-    # Create pyqtSignals for keeping track of the state of the background 
-    # and grid when the theme is changed
-    background_selected = pyqtSignal(bool)
-    grid_selected = pyqtSignal(bool)
+class ChartView(QChartView):
     
-    def __init__(self, parent, bar_graph):
-        super().__init__()
-        self.graph = bar_graph
-        self.parent = parent
+    def __init__(self, chart):
+        super().__init__(chart)
+        self.chart = chart   
 
-        # Set up rotation and visual variables
-        self.horizontal_rotation = 0
-        self.vertical_rotation = 0    
-        self.camera_preset = Q3DCamera.CameraPresetFront
-        self.bar_style = QAbstract3DSeries.MeshBar
-        self.bars_are_smooth = False
+        # Starting position for mouse press event
+        self.start_pos = None 
 
-    def rotateHorizontal(self, rotation):
-        self.graph.scene().activeCamera().setCameraPosition(
-            rotation, self.vertical_rotation)
+    def wheelEvent(self, event):
+        """Reimplement the scroll wheel on the mouse for zooming in and out on the chart."""
+        zoom_factor = 1.0 # Simple way to control the total amount zoomed in or out
+        scale_factor = 1.10 # How much to scale into or out of the chart
 
-    def rotateVertical(self, rotation):
-        self.graph.scene().activeCamera().setCameraPosition(
-            self.horizontal_rotation, rotation)
+        if event.angleDelta().y() >= 120 and zoom_factor < 3.0:
+            zoom_factor *= 1.25
+            self.chart.zoom(scale_factor)
+        elif event.angleDelta().y() <= -120 and zoom_factor > 0.5:
+            zoom_factor *= 0.8
+            self.chart.zoom(1 / scale_factor)
+            
+    def mousePressEvent(self, event):
+        """If the mouse button is pressed, change the mouse cursor and 
+        get the coordinates of the click."""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+            self.start_pos = event.pos()
 
-    def changeCameraView(self):
-        """Change the camera's preset (the angle from which we view the camera) by 
-        cycling through Qt's different preset camera views."""
-        self.graph.scene().activeCamera().setCameraPreset(self.camera_preset + 1)
-        preset = int(self.camera_preset) + 1
+    def mouseMoveEvent(self, event):
+        """Reimplement the mouseMoveEvent so that the user can scroll the chart area."""
+        if (event.buttons() == Qt.LeftButton):
+            delta = self.start_pos - event.pos()
+            self.chart.scroll(delta.x(), -delta.y())
+            self.start_pos = event.pos()
 
-        if preset > Q3DCamera.CameraPresetDirectlyBelow:
-            # Reset predefined position for camera to 0 (CameraPresetFrontLow)
-            self.camera_preset = Q3DCamera.CameraPresetFrontLow
-        else: 
-            self.camera_preset = Q3DCamera.CameraPreset(preset)
-        
-    def showOrHideBackground(self, state):
-        self.graph.activeTheme().setBackgroundEnabled(state)
+    def mouseReleaseEvent(self, event):
+        self.setDragMode(QGraphicsView.DragMode.NoDrag) # Don't display mouse cursor
 
-    def showOrHideGrid(self, state):
-        self.graph.activeTheme().setGridEnabled(state)
-
-    def smoothenBars(self, state):
-        """Smoothen the edges of the items in all series."""
-        self.bars_are_smooth = state
-        for series in self.graph.seriesList():
-            series.setMeshSmooth(self.bars_are_smooth)
-
-    def changeTheme(self, theme):
-        """Change the theme and appearance of the graph. Update the QCheckbox widgets."""
-        active_theme = self.graph.activeTheme()
-        active_theme.setType(Q3DTheme.Theme(theme))
-        self.background_selected.emit(active_theme.isBackgroundEnabled())
-        self.grid_selected.emit(active_theme.isGridEnabled())
-
-    def changeBarStyle(self, style):
-        """Change the visual style of the bars."""
-        combo_box = self.sender()
-        if isinstance(combo_box, QComboBox):
-            self.bar_style = QAbstract3DSeries.Mesh(combo_box.itemData(style))
-            for series in self.graph.seriesList():
-                series.setMesh(self.bar_style)
-
-    def showOrHideSeries(self, state):
-        """Show or hide the secondary series. seriesList()[1] refers to Spokane; 
-        seriesList()[2] refers to Richmond."""
-        checkbox = self.sender()
-        if state == Qt.Checked and checkbox.text() == "Show Second Series":
-            self.graph.seriesList()[1].setVisible(True)
-        elif state != Qt.Checked and checkbox.text() == "Show Second Series":
-            self.graph.seriesList()[1].setVisible(False)
-
-        if state == Qt.Checked and checkbox.text() == "Show Third Series":
-            self.graph.seriesList()[2].setVisible(True)
-        elif state != Qt.Checked and checkbox.text() == "Show Third Series":
-            self.graph.seriesList()[2].setVisible(False)
-        
-    def changeSelectionStyle(self, style):
-        """Choose the style used to select data, by rows, columns or other options."""
-        combo_box = self.sender()
-        if isinstance(combo_box, QComboBox):
-            selection_style = combo_box.itemData(style)
-            self.graph.setSelectionMode(QAbstract3DGraph.SelectionFlags(selection_style))
-    
-    def selectYears(self, year):
-        """Select a specific year to view."""
-        if year >= len(self.parent.years):
-            self.graph.axes()[1].setRange(0, len(self.parent.years) - 1)
-        else:
-            self.graph.axes()[1].setRange(year, year)
-
-    def selectMonths(self, month):
-        """Select a specific month to view."""
-        if month >= len(self.parent.months):
-            self.graph.axes()[0].setRange(0, len(self.parent.months) - 1)
-        else:
-            self.graph.axes()[0].setRange(month, month)
-
-class SimpleBarGraph(QMainWindow):
+class MainWindow(QMainWindow):
 
     def __init__(self):
-        super().__init__() 
-        self.initializeUI() 
+        super().__init__()
+        self.initializeUI()
+
+    def initializeUI(self):
+        """Initialize the window and display its contents."""
+        self.setMinimumSize(1200, 600)
+        self.setWindowTitle("3.1 - Data Visualization GUI")
+
+        self.setupChart()
+        self.setupToolsDockWidget()
+        self.setupMenu()
+        self.show()
+
+    def setupChart(self):
+        """Set up the GUI's graph series type, chart instance, chart axes, 
+        and chart view widget."""
+        random.seed(50) # Create seed for random numbers
+
+        # Create the model instance and set the headers
+        self.model = QStandardItemModel()
+        self.model.setColumnCount(3)
+        self.model.setHorizontalHeaderLabels(["Year", "Social Exp. %GDP", "Country"])
+
+        # Collect x and y data values and labels from the CSV file
+        xy_data_and_labels = self.loadCSVFile()
+
+        # Create the individual lists for x, y and labels values
+        x_values, y_values, labels = [], [], []
+        # Append items to the corresponding lists
+        for item in range(len(xy_data_and_labels)):
+            x_values.append(xy_data_and_labels[item][0])
+            y_values.append(xy_data_and_labels[item][1])
+            labels.append(xy_data_and_labels[item][2])
+
+        # Remove all duplicates from the labels list using list comprehension. 
+        # This list will be used to create the labels in the chart's legend.
+        set_of_labels = []
+        [set_of_labels.append(x) for x in labels if x not in set_of_labels]  
+    
+        # Create chart object
+        self.chart = QChart()
+        self.chart.setTitle("Public Social Spending as a Share of GDP, 1880 to 2016")
+        self.chart.legend().hide() # Hide legend at the start
+
+        # Specify parameters for the x and y axes
+        self.axis_x = QValueAxis()
+        self.axis_x.setLabelFormat("%i")
+        self.axis_x.setTickCount(10)
+        self.axis_x.setRange(1880, 2016)
+        self.chart.addAxis(self.axis_x, Qt.AlignmentFlag.AlignBottom)
+
+        self.axis_y = QValueAxis()
+        self.axis_y.setLabelFormat("%i" + "%")
+        self.axis_y.setRange(0, 40)
+        self.chart.addAxis(self.axis_y, Qt.AlignmentFlag.AlignLeft)
+
+        # Create a Python dict to associate the labels with the individual line series
+        series_dict = {}
+
+        for label in set_of_labels:
+            # Create labels from data and add them to a Python dictionary
+            series_label = 'series_{}'.format(label)
+            series_dict[series_label] = label # Create label value for each line series
+
+        # For each of the keys in the dict, create a line series
+        for keys in series_dict.keys():
+            # Use get() to access the corresponding value for a key
+            label = series_dict.get(keys)
+
+            # Create line series instance and set its name and color values
+            line_series = QLineSeries()
+            line_series.setName(label)
+            line_series.setColor(QColor(random.randint(10, 254), random.randint(10, 254), random.randint(10, 254)))
+
+            # Append x and y coordinates to the series
+            for value in range(len(xy_data_and_labels)):
+                if line_series.name() == xy_data_and_labels[value][2]:
+                    line_series.append(x_values[value], y_values[value])
+
+                    # Create and add items to the model (for displaying the table)
+                    items = [QStandardItem(str(item)) for item in xy_data_and_labels[value]]
+                    color = line_series.pen().color()
+                    for item in items:
+                        item.setBackground(QColor(color))
+                    self.model.insertRow(value, items)
+
+            self.chart.addSeries(line_series)
+            line_series.attachAxis(self.axis_x)
+            line_series.attachAxis(self.axis_y)   
+
+        # Create QChartView object for displaying the chart 
+        self.chart_view = ChartView(self.chart)
+        self.setCentralWidget(self.chart_view)
 
     def setupMenu(self):
-        """Set up menu bar."""
-        # Create actions for file menu
-        save_act = QAction('Save', self)
-        save_act.setShortcut('Ctrl+S')
-        #save_act.triggered.connect(self.saveTableToFile)
-
-        exit_act = QAction('Exit', self)
-        exit_act.setShortcut('Ctrl+Q')
-        exit_act.triggered.connect(self.close)
-
-        # Create menubar
+        """Create a simple menu to manage the dock widget."""
         menu_bar = self.menuBar()
-        # For MacOS users, places menu bar in main window
         menu_bar.setNativeMenuBar(False)
 
-        # Create file menu and add actions
-        file_menu = menu_bar.addMenu('File')
-        file_menu.addAction(save_act)
-        file_menu.addSeparator()
-        file_menu.addAction(exit_act)
+        # Create view menu and add actions
         view_menu = menu_bar.addMenu('View')
         view_menu.addAction(self.toggle_dock_tools_act)
 
@@ -151,7 +163,7 @@ class SimpleBarGraph(QMainWindow):
         tools_dock = QDockWidget()
         tools_dock.setWindowTitle("Tools")
         tools_dock.setMinimumWidth(400)
-        tools_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        tools_dock.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea)
 
         # Create widgets for dock widget area
         themes_cb = QComboBox()
@@ -160,18 +172,18 @@ class SimpleBarGraph(QMainWindow):
         themes_cb.currentTextChanged.connect(self.changeChartTheme)
 
         self.animations_cb = QComboBox()
-        self.animations_cb.addItem("No Animation", QChart.NoAnimation)
-        self.animations_cb.addItem("Grid Animation", QChart.GridAxisAnimations)
-        self.animations_cb.addItem("Series Animation", QChart.SeriesAnimations)
-        self.animations_cb.addItem("All Animations", QChart.AllAnimations)
+        self.animations_cb.addItem("No Animation", QChart.AnimationOption.NoAnimation)
+        self.animations_cb.addItem("Grid Animation", QChart.AnimationOption.GridAxisAnimations)
+        self.animations_cb.addItem("Series Animation", QChart.AnimationOption.SeriesAnimations)
+        self.animations_cb.addItem("All Animations", QChart.AnimationOption.AllAnimations)
         self.animations_cb.currentIndexChanged.connect(self.changeAnimations)
 
         self.legend_cb = QComboBox()
         self.legend_cb.addItem("No Legend")
-        self.legend_cb.addItem("Align Left", Qt.AlignLeft)
-        self.legend_cb.addItem("Align Top", Qt.AlignTop)
-        self.legend_cb.addItem("Align Right", Qt.AlignRight)
-        self.legend_cb.addItem("Align Bottom", Qt.AlignBottom)
+        self.legend_cb.addItem("Align Left", Qt.AlignmentFlag.AlignLeft)
+        self.legend_cb.addItem("Align Top", Qt.AlignmentFlag.AlignTop)
+        self.legend_cb.addItem("Align Right", Qt.AlignmentFlag.AlignRight)
+        self.legend_cb.addItem("Align Bottom", Qt.AlignmentFlag.AlignBottom)
         self.legend_cb.currentTextChanged.connect(self.changeLegend)
 
         self.antialiasing_check_box = QCheckBox()
@@ -183,11 +195,11 @@ class SimpleBarGraph(QMainWindow):
         # Create table view and set its model
         data_table_view = QTableView()
         data_table_view.setModel(self.model)
-        data_table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        data_table_view.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)   
+        data_table_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        data_table_view.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)   
 
         dock_form = QFormLayout()
-        dock_form.setAlignment(Qt.AlignTop)
+        dock_form.setAlignment(Qt.AlignmentFlag.AlignTop)
         dock_form.addRow("Themes:", themes_cb)
         dock_form.addRow("Animations:", self.animations_cb)
         dock_form.addRow("Legend:", self.legend_cb)
@@ -200,244 +212,78 @@ class SimpleBarGraph(QMainWindow):
         tools_container.setLayout(dock_form)
         tools_dock.setWidget(tools_container)
 
-        self.addDockWidget(Qt.LeftDockWidgetArea, tools_dock)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, tools_dock)
         # Handles the visibility of the dock widget
         self.toggle_dock_tools_act = tools_dock.toggleViewAction()
 
-    def setupWindow(self):
-        """The window is comprised of two main parts: A Q3DBars graph on the left, and QToolBox
-        on the right containing different widgets for tweaking different settings in the Q3DBars graph."""
-        header_label = QLabel("Comparison of Average Monthly Temperatures of Select U.S. Cities 1990-2000 (˚C)")
-        header_label.setAlignment(Qt.AlignCenter)
-
-        # Load and prepare the data for the three datasets
-        data_files = ["LasVegas_temp.csv", "Spokane_temp.csv", "Richmond_temp.csv"]
-        temperature_data = {}
-        # Create a dictionary with key, value pairs pertaining to each city and dataset
-        for f in data_files:
-            data_name = f.split("_")[0] + "_data" # Create a dictionary key for each city
-            data = self.loadCSVFile("files/" + f)
-    
-            # Select 11 years: 1990-2000; the first column in each file is the years
-            rows, columns = data.shape
-            self.years = data[:, 0]
-            monthly_temps = data[:, 1:columns].astype(float)
-            temperature_data[data_name] = monthly_temps
-
-        bar_graph = Q3DBars() # Create instance for bar graph
-        bar_graph.setMultiSeriesUniform(True) # Bars are scaled proportionately
-        bar_graph.scene().activeCamera().setCameraPreset(Q3DCamera.CameraPresetFront)
-
-        # Create lists of QBarDataItem objects for each city 
-        vegas_data_items = []
-        for row in temperature_data["LasVegas_data"]:
-            vegas_data_items.append([QBarDataItem(value) for value in row])
-
-        spokane_data_items = []
-        for row in temperature_data["Spokane_data"]:
-            spokane_data_items.append([QBarDataItem(value) for value in row])
-    
-        richmond_data_items = []
-        for row in temperature_data["Richmond_data"]:
-            richmond_data_items.append([QBarDataItem(value) for value in row])
-
-        self.months = ["January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"]
-
-        # Create instances of QBar3DSeries for each set of data; dataProxy() handles 
-        # modifying data in the series
-        vegas_series = QBar3DSeries()
-        vegas_series.dataProxy().addRows(vegas_data_items)
-        vegas_series.dataProxy().setRowLabels(self.years) # rowLabel
-        vegas_series.dataProxy().setColumnLabels(self.months) # colLabel
-
-        spokane_series = QBar3DSeries()
-        spokane_series.dataProxy().addRows(spokane_data_items)
-
-        richmond_series = QBar3DSeries()
-        richmond_series.dataProxy().addRows(richmond_data_items)
-
-        # Create the valueLabel
-        temperature_axis = QValue3DAxis()
-        temperature_axis.setRange(-10, 40)
-        temperature_axis.setLabelFormat(u"%.1f \N{degree sign}C")
-        bar_graph.setValueAxis(temperature_axis)
-
-        # Set the format for the labels that appear when items are clicked on
-        vegas_series.setItemLabelFormat("LasVegas - @colLabel @rowLabel: @valueLabel")
-        spokane_series.setItemLabelFormat("Spokane - @colLabel @rowLabel: @valueLabel")
-        richmond_series.setItemLabelFormat("Richmond - @colLabel @rowLabel: @valueLabel")
-
-        # Add the three series to the bar graph
-        bar_graph.setPrimarySeries(vegas_series)
-        bar_graph.addSeries(spokane_series)
-        bar_graph.addSeries(richmond_series)
-
-        # Create a QWidget to hold only the graph
-        graph_container = QWidget.createWindowContainer(bar_graph)
-        main_h_box = QHBoxLayout() # Main layout for the entire window
-        graph_v_box = QVBoxLayout() # Layout that holds the graph
-        graph_v_box.addWidget(header_label)
-        graph_v_box.addWidget(graph_container, 1)
-
-        ##############################################################################
-        # The following section creates the QToolBox that appears on the
-        # right of the window and contains widgets for interacting with the graph
-        self.modifier = GraphModifier(self, bar_graph) # Create modifier instance
-
-        settings_toolbox = QToolBox()
-        settings_toolbox.setFixedWidth(300)
-        settings_toolbox.setCurrentIndex(0) # Show the first tab
-
-        # The first tab - Widgets for rotating the bar graph and changing the camera
-        horizontal_rotation_slider = QSlider(Qt.Horizontal)
-        horizontal_rotation_slider.setTickInterval(20)
-        horizontal_rotation_slider.setRange(-180, 180)
-        horizontal_rotation_slider.setValue(0)
-        horizontal_rotation_slider.setTickPosition(QSlider.TicksBelow)
-        horizontal_rotation_slider.valueChanged.connect(self.modifier.rotateHorizontal)
+    def changeChartTheme(self, text):
+        """Slot for changing the theme of the chart."""
+        themes_dict = {"Light": 0, "Cerulean Blue": 1, "Dark": 2, "Sand Brown": 3, 
+            "NCS Blue": 4, "High Contrast": 5, "Icy Blue": 6, "Qt": 7}
+        theme = themes_dict.get(text)
+        if theme == 0:
+            self.setupChart()
+        else:
+            self.chart.setTheme(theme)
         
-        vertical_rotation_slider = QSlider(Qt.Horizontal)
-        vertical_rotation_slider.setTickInterval(20)
-        vertical_rotation_slider.setRange(-180, 180)
-        vertical_rotation_slider.setValue(0)
-        vertical_rotation_slider.setTickPosition(QSlider.TicksBelow)
-        vertical_rotation_slider.valueChanged.connect(self.modifier.rotateVertical)
+    def changeAnimations(self):
+        """Slot for changing the animation style of the chart."""        
+        animation = QChart.AnimationOption(
+            self.animations_cb.itemData(self.animations_cb.currentIndex()))
+        self.chart.setAnimationOptions(animation)
 
-        # QPushButton for changing the camera's view point
-        camera_view_button = QPushButton("Change Camera View")
-        camera_view_button.clicked.connect(self.modifier.changeCameraView)
+    def changeLegend(self, text):
+        """Slot for turning off the legend, or changing its location."""
+        alignment = self.legend_cb.itemData(self.legend_cb.currentIndex())
 
-        # Layout for the View tab (first tab)
-        view_tab_container = QWidget()
-        view_tab_v_box = QVBoxLayout()
-        view_tab_v_box.setAlignment(Qt.AlignTop)
-        view_tab_v_box.addWidget(QLabel("Rotate Horizontally"))
-        view_tab_v_box.addWidget(horizontal_rotation_slider)
-        view_tab_v_box.addWidget(QLabel("Rotate Vertically"))
-        view_tab_v_box.addWidget(vertical_rotation_slider)
-        view_tab_v_box.addWidget(camera_view_button)
-        view_tab_container.setLayout(view_tab_v_box)
+        if text == "No Legend":
+            self.chart.legend().hide()
+        else:
+            self.chart.legend().setAlignment(Qt.Alignment(alignment))
+            self.chart.legend().show()
 
-        settings_toolbox.addItem(view_tab_container, "View")
+    def toggleAntialiasing(self, state):
+        """If self.antialiasing_check_box.isChecked() is True, turn on antialiasing."""
+        if state:
+            self.chart_view.setRenderHint(QPainter.Antialiasing, on=True)
+        else:
+            self.chart_view.setRenderHint(QPainter.Antialiasing, on=False)
 
-        # The second tab - Widgets for changing the appearance of the graph. Recheck the  
-        # background and grid checkboxes if the theme has changed
-        show_background_cb = QCheckBox("Show Background")
-        show_background_cb.setChecked(True)
-        show_background_cb.stateChanged.connect(self.modifier.showOrHideBackground)
-        self.modifier.background_selected.connect(show_background_cb.setChecked)
+    def resetChartZoom(self):
+        """Reset the chart and the axes."""
+        self.chart.zoomReset()
+        self.axis_x.setRange(1880, 2016)
+        self.axis_y.setRange(0, 40)
+            
+    def loadCSVFile(self):
+        """Load data from CSV file for the chart. 
+        Select and store x and y values and labels into Python list objects.
+        Return the xy_data_and_labels list."""
+        file_name = "files/social_spending_simplified.csv"
 
-        show_grid_cb = QCheckBox("Show Grid")
-        show_grid_cb.setChecked(True)
-        show_grid_cb.stateChanged.connect(self.modifier.showOrHideGrid)
-        self.modifier.grid_selected.connect(show_grid_cb.setChecked)
-
-        smooth_bars_cb = QCheckBox("Smoothen Bars")
-        smooth_bars_cb.stateChanged.connect(self.modifier.smoothenBars)
-
-        # QComboBox for selecting the Qt theme
-        themes = ["Qt", "Primary Colors", "Digia", "Stone Moss", "Army Blue",
-            "Retro", "Ebony", "Isabelle"]
-        select_theme_combo = QComboBox()
-        select_theme_combo.addItems(themes)
-        select_theme_combo.setCurrentIndex(0)
-        select_theme_combo.currentIndexChanged.connect(self.modifier.changeTheme)
-
-        # QComboBox for selecting the visual style of the bars
-        bar_style_combo = QComboBox()
-        bar_style_combo.addItem("Bar", QAbstract3DSeries.MeshBar)
-        bar_style_combo.addItem("Pyramid", QAbstract3DSeries.MeshPyramid)
-        bar_style_combo.addItem("Cylinder", QAbstract3DSeries.MeshCylinder)        
-        bar_style_combo.addItem("Sphere", QAbstract3DSeries.MeshSphere)
-        bar_style_combo.setCurrentIndex(0)
-        bar_style_combo.currentIndexChanged.connect(self.modifier.changeBarStyle)
-
-        # Layout for the Style tab (second tab)
-        style_tab_container = QWidget()
-        style_tab_v_box = QVBoxLayout()
-        style_tab_v_box.setAlignment(Qt.AlignTop)
-        style_tab_v_box.addWidget(show_background_cb)
-        style_tab_v_box.addWidget(show_grid_cb)
-        style_tab_v_box.addWidget(smooth_bars_cb)
-        style_tab_v_box.addWidget(QLabel("Select Qt Theme"))
-        style_tab_v_box.addWidget(select_theme_combo)
-        style_tab_v_box.addWidget(QLabel("Select Bar Style"))
-        style_tab_v_box.addWidget(bar_style_combo)
-        style_tab_container.setLayout(style_tab_v_box)
-
-        settings_toolbox.addItem(style_tab_container, "Style")
-
-        # The third tab - Widgets for hiding/showing different series and changing how 
-        # items are viewed and selected
-        second_series_cb = QCheckBox("Show Second Series")
-        second_series_cb.setChecked(True)
-        second_series_cb.stateChanged.connect(self.modifier.showOrHideSeries)
-
-        third_series_cb = QCheckBox("Show Third Series")
-        third_series_cb.setChecked(True)
-        third_series_cb.stateChanged.connect(self.modifier.showOrHideSeries)
-
-        # QComboBox for changing how items in the bar graph are selected
-        selection_mode_combo = QComboBox()
-        selection_mode_combo.addItem("None", QAbstract3DGraph.SelectionNone)
-        selection_mode_combo.addItem("Bar", QAbstract3DGraph.SelectionItem)
-        selection_mode_combo.addItem("Row", QAbstract3DGraph.SelectionRow)
-        selection_mode_combo.addItem("Column", QAbstract3DGraph.SelectionColumn)
-        selection_mode_combo.addItem("Item, Row, Column", QAbstract3DGraph.SelectionItemRowAndColumn)
-        selection_mode_combo.setCurrentIndex(1)
-        selection_mode_combo.currentIndexChanged.connect(self.modifier.changeSelectionStyle)
-
-        # QComboBox for selecting which years to view
-        select_year_combo = QComboBox()
-        select_year_combo.addItems(self.years)
-        select_year_combo.addItem("All Years")
-        select_year_combo.setCurrentIndex(len(self.years))
-        select_year_combo.currentIndexChanged.connect(self.modifier.selectYears)
-
-        # QComboBox for selecting which months to view
-        select_month_combo = QComboBox()
-        select_month_combo.addItems(self.months)
-        select_month_combo.addItem("All Months")
-        select_month_combo.setCurrentIndex(len(self.months))
-        select_month_combo.currentIndexChanged.connect(self.modifier.selectMonths)    
-
-        # Layout for the Selection tab (third tab)
-        selection_tab_container = QWidget()
-        selection_tab_v_box = QVBoxLayout()
-        selection_tab_v_box.addWidget(second_series_cb)
-        selection_tab_v_box.addWidget(third_series_cb)
-        selection_tab_v_box.addWidget(QLabel("Choose Selection Mode"))
-        selection_tab_v_box.addWidget(selection_mode_combo)
-        selection_tab_v_box.addWidget(QLabel("Select Year"))
-        selection_tab_v_box.addWidget(select_year_combo)
-        selection_tab_v_box.addWidget(QLabel("Select Month"))
-        selection_tab_v_box.addWidget(select_month_combo)
-        selection_tab_container.setLayout(selection_tab_v_box)
-
-        settings_toolbox.addItem(selection_tab_container, "Selection") 
-
-        # Set up the layout for the settings toolbox
-        settings_v_box = QVBoxLayout()
-        settings_v_box.addWidget(settings_toolbox, 0, Qt.AlignTop)
-
-        main_h_box.addLayout(graph_v_box)
-        main_h_box.addLayout(settings_v_box)
-
-        main_widget = QWidget()
-        main_widget.setLayout(main_h_box)
-        self.setCentralWidget(main_widget)
-
-    def loadCSVFile(self, file_name):
-        """Load CSV files. Return data as numpy arrays."""
         with open(file_name, "r") as csv_f:
-            reader = csv.reader(csv_f)
+            reader = csv.reader(csv_f)  # Pass the file object to csv.reader
             header_labels = next(reader)
-            data = np.array(list(reader))
-        return data
 
-if __name__ == '__main__':
+            row_values = []  # Store current row values
+            xy_data_and_labels = []  # Store all values
+
+            for i, row in enumerate(reader):
+                x = int(row[2])  
+                y = float(row[3])   
+                label = row[0]
+
+                row_values.append(x)
+                row_values.append(y)  
+                row_values.append(label)
+
+                # Add row_values to xy_data_and_labels, then reset row_values
+                xy_data_and_labels.append(row_values)
+                row_values = []
+
+        return xy_data_and_labels
+
+if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyleSheet(style_sheet)
-    window = SimpleBarGraph()
-    sys.exit(app.exec_())
+    window = MainWindow()
+    sys.exit(app.exec())
