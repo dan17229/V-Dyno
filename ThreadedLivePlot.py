@@ -36,6 +36,7 @@ class CANCapture(QObject):
         print("Receiving started")
         status_key = f'VESC_Status1_V{version}'
         while self._running:
+            tester.flush_input()
             status = tester.expect(status_key, None, timeout=.01, discard_other_messages=True)
             if status is not None:
                 value = status[key]  # read line (single value) from the serial por
@@ -55,7 +56,6 @@ class Window(QMainWindow):
         self._thread.started.connect(self._threaded.startThread)
         self._threaded.moveToThread(self._thread)
         self.initializeUI()
-        self.win, self.windowWidth = self.setupWindow()
 
         # Connect the aboutToQuit signal to the stopThread method
         QApplication.instance().aboutToQuit.connect(self.stopThread)
@@ -132,7 +132,7 @@ class Window(QMainWindow):
         # First plot
         self.p1 = win.addPlot(title="M.U.T RPM", row=0, col=1)  # creates empty space for the first plot in the window
         self.curve1 = self.p1.plot()  # create an empty "plot" (a curve to plot)
-        print("Plot initialized")  # Debug print statement
+        print(f"Curve initialized: {self.curve1}")
 
         windowWidth = 500  # width of the window displaying the curve
 
@@ -141,17 +141,13 @@ class Window(QMainWindow):
 
         return win, windowWidth
     
-    @pyqtSlot(object)
     def plotGraph(self, value):
-        print(f"plotGraph called with value: {value}")  # Debug print statement
         self.Xm[:-1] = self.Xm[1:]                      # shift data in the temporal mean 1 sample left
         self.Xm[-1] = float(value)                      # vector containing the instantaneous values
         self.ptr += 1                                   # update x position for displaying the curve
-        print(f"Updated Xm: {self.Xm}")                 # Debug print statement
         self.curve1.setData(self.Xm)                    # set the curve with this data
         self.curve1.setPos(self.ptr, 0)                 # set x position in the graph to 0
         QtWidgets.QApplication.processEvents()          # you MUST process the plot now
-        print(f"Plot updated at position: {self.ptr}")  # Debug print statement
 
     def detectCOMPort(self):
         ports = list(serial.tools.list_ports.comports())
@@ -176,8 +172,11 @@ class Window(QMainWindow):
         return tester
 
     def closeCANBus(self):
-        if hasattr(self, 'can_bus') and self.can_bus is not None:
-            self.can_bus.shutdown()
+        try:
+            if hasattr(self, 'can_bus') and self.can_bus is not None:
+                self.can_bus.shutdown()
+        except Exception as e:
+            print(f"Error during CAN bus shutdown")
     
     @pyqtSlot()
     def startThread(self):
