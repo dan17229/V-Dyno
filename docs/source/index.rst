@@ -1,8 +1,8 @@
-.. image:: gui/logo-full.svg
-    :alt: V-dyno Logo
-    :align: center
-Welcome to V-dyno documentation!
 ===================================
+.. image:: images/v-dyno-09.jpg
+    :alt: V-dyno Logo
+
+V-dyno
 
 **V-dyno** (/lu'make/) is a Python package that enables the usage of.
 
