@@ -1,4 +1,7 @@
-Welcome to Lumache's documentation!
+.. image:: gui/logo-full.svg
+    :alt: V-dyno Logo
+    :align: center
+Welcome to V-dyno documentation!
 ===================================
 
 **Lumache** (/lu'make/) is a Python library for cooks and food lovers
