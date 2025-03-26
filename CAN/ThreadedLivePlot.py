@@ -3,6 +3,7 @@ import sys
 
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
+from PyQt6.QtGui import QPixmap
 
 from numpy import linspace
 from pyqtgraph.Qt import QtGui, QtCore, QtWidgets
@@ -14,6 +15,9 @@ import os
 import serial.tools.list_ports
 from GUI.Styles.StyleSheet import style_sheet
 
+import ctypes
+myappid = 'mycompany.myproduct.subproduct.version' # arbitrary string
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 ## Switch to using white background and black foreground
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
@@ -48,7 +52,9 @@ class Window(QMainWindow):
 
     def __init__(self, parent=None, **kwargs):
         super().__init__(parent, **kwargs)
-
+        # Make it light theme
+        app.setStyle('WindowsVista')  # Replace 'Windows' with the desired style
+        app.setWindowIcon(QtGui.QIcon('GUI/icon.svg'))
         self._thread = QThread()
         self._threaded = CANCapture()
         self._threaded.result.connect(self.plotGraph)
@@ -56,6 +62,8 @@ class Window(QMainWindow):
         self._thread.started.connect(self._threaded.startThread)
         self._threaded.moveToThread(self._thread)
         self.initializeUI()
+        self.setupToolsDockWidget()
+        self.setupMenu()
 
         # Connect the aboutToQuit signal to the stopThread method
         QApplication.instance().aboutToQuit.connect(self.stopThread)
@@ -95,9 +103,41 @@ class Window(QMainWindow):
         self.show()
 
     def setupWindow(self):
-        input_layout = QtWidgets.QVBoxLayout()
-        input_widget = QtWidgets.QWidget()
-        input_widget.setLayout(input_layout)
+        # Create an instance of GraphicsLayoutWidget
+        win = pg.GraphicsLayoutWidget()
+
+        # Apply the stylesheet to the GraphicsLayoutWidget
+        win.setStyleSheet(style_sheet)
+
+        # First plot
+        self.p1 = win.addPlot(title="M.U.T RPM", row=0, col=1)  # creates empty space for the first plot in the window
+        self.curve1 = self.p1.plot()  # create an empty "plot" (a curve to plot)
+        
+        windowWidth = 500  # width of the window displaying the curve
+
+        self.Xm = linspace(0, 0, windowWidth)  # create array that will contain the relevant time series for plot
+        self.ptr = -windowWidth
+
+        return win, windowWidth
+    
+    def setupMenu(self):
+        """Create a simple menu to manage the dock widget."""
+        menu_bar = self.menuBar()
+        menu_bar.setNativeMenuBar(False)
+
+        # Create view menu and add actions
+        view_menu = menu_bar.addMenu('View')
+        view_menu.addAction(self.toggle_dock_tools_act)
+    
+    def setupToolsDockWidget(self):
+        """Set up the dock widget that displays different tools and themes for 
+        interacting with the chart. Also displays the data values in a table view object."""
+        tools_dock = QDockWidget()
+        tools_dock.setWindowTitle("Tools")
+        tools_dock.setMinimumWidth(400)
+        tools_dock.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea)
+
+        # Widgets 
 
         rpm_label = QtWidgets.QLabel("Motor 1 RPM:")
         rpm_input = QtWidgets.QSpinBox()
@@ -111,35 +151,19 @@ class Window(QMainWindow):
         brake_current_input.setSingleStep(0.1)  # Set the step size for duty cycle input
         brake_current_input.setValue(0)  # Set a default value
 
-        input_layout.addWidget(rpm_label)
-        input_layout.addWidget(rpm_input)
-        input_layout.addWidget(brake_current_label)
-        input_layout.addWidget(brake_current_input)
+        dock_form = QFormLayout()
+        dock_form.setAlignment(Qt.AlignmentFlag.AlignTop)
+        dock_form.addRow("RPM:", rpm_input)
+        dock_form.addRow("Brake current:", brake_current_input)
 
-        # Create a proxy widget to embed the QWidget into the GraphicsLayoutWidget
-        proxy = QtWidgets.QGraphicsProxyWidget()
-        proxy.setWidget(input_widget)
+        # Create QWidget object to act as a container for dock widgets
+        tools_container = QWidget()
+        tools_container.setLayout(dock_form)
+        tools_dock.setWidget(tools_container)
 
-        # Create an instance of GraphicsLayoutWidget
-        win = pg.GraphicsLayoutWidget()
-
-        # Apply the stylesheet to the GraphicsLayoutWidget
-        win.setStyleSheet(style_sheet)
-
-        # Add the proxy widget to the GraphicsLayoutWidget
-        win.addItem(proxy, row=0, col=0)
-
-        # First plot
-        self.p1 = win.addPlot(title="M.U.T RPM", row=0, col=1)  # creates empty space for the first plot in the window
-        self.curve1 = self.p1.plot()  # create an empty "plot" (a curve to plot)
-        print(f"Curve initialized: {self.curve1}")
-
-        windowWidth = 500  # width of the window displaying the curve
-
-        self.Xm = linspace(0, 0, windowWidth)  # create array that will contain the relevant time series for plot
-        self.ptr = -windowWidth
-
-        return win, windowWidth
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, tools_dock)
+        # Handles the visibility of the dock widget
+        self.toggle_dock_tools_act = tools_dock.toggleViewAction()
     
     def plotGraph(self, value):
         self.Xm[:-1] = self.Xm[1:]                      # shift data in the temporal mean 1 sample left

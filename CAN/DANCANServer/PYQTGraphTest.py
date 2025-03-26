@@ -37,10 +37,10 @@ input_layout = QtWidgets.QVBoxLayout()
 input_widget = QtWidgets.QWidget()
 input_widget.setLayout(input_layout)
 
-rpm_label = QtWidgets.QLabel("Motor 1 RPM:")
-rpm_input = QtWidgets.QSpinBox()
-rpm_input.setRange(0, 10000)  # Set the range for RPM input
-rpm_input.setSingleStep(10)  # Set the step size for duty cycle input
+rpm_label = QtWidgets.QLabel("Motor 1 current::")
+rpm_input = QtWidgets.QDoubleSpinBox()
+rpm_input.setRange(-3, 3)  # Set the range for RPM input
+rpm_input.setSingleStep(0.1)  # Set the step size for duty cycle input
 rpm_input.setValue(0)  # Set a default value
 
 brake_current_label = QtWidgets.QLabel("Motor 2 brake current:")
@@ -112,7 +112,7 @@ def update():
 
     if rpm_value > 0:
         rpm_value = rpm_value * pole_pairs
-        tester.send('VESC_Command_RPM_V1', {'Command_RPM_V1': rpm_value})
+        tester.send('VESC_Command_RelCurrent_V1', {'Command_RelativeCurrent_V1': rpm_value})
     tester.send('VESC_Command_AbsBrakeCurrent_V2', {'Command_BrakeCurrent_V2': brake_current})
     tester.flush_input()
     status1 = tester.expect('VESC_Status1_V1', None, timeout=.01, discard_other_messages=True)
