@@ -1,13 +1,20 @@
-![Logo](VDyno/GUI/styles/v-dyno-09.jpg)
+![Logo](VDyno/GUI/styles/MainLogo.png){width=200px}
 # V-dyno
 V-Dyno was created as part of a masters group project in 2024/25 at the University of Bristol.
 
-The dynamometer is designed to characterise <1kW electric motors, using the VESC MKVI as motor controllers, and a decently modular setup to allow you to swap sensors.
+The dynamometer is designed to characterise <1kW electric motors, using the VESC MKVI as motor controllers.
 
 This Repo contains test results, code etc. pertaining to our GIP creating a desktop dynamometer for <1kW electric motors. It is based on the VESC and python-can projects.
 
-make sure to run:
+## Getting Started
+To install all development dependencies and how to run an automated test-suite of some kind.
+
+```sh
 pip install requirements.txt
+```
+
+## Usage example
+To use the GUI, navigate to VescDyno.py and run.
 
 ## \CAN
 ### \DANCANServer
@@ -24,17 +31,6 @@ This is a jypter notebook overviewing how torque constant was calculated from dr
 ### \Back_EMF_Data_Drill
 Contains data stored in many folders, each representing one output from the oscilloscope.
 
-!
-## Usage example
-
-
-## Development setup
-
-To install all development dependencies and how to run an automated test-suite of some kind.
-
-```sh
-pip install requirements.txt
-```
 ## Meta
 
 Your Name – [LinkedIN]() – danielmuir167@gmail.com
