@@ -1,22 +1,22 @@
-![Logo](VDyno/GUI/styles/MainLogo.png){width=200px}
-# V-dyno
-V-Dyno was created as part of a masters group project in 2024/25 at the University of Bristol.
+# <img src="VDyno/GUI/styles/MainLogo.png" alt="logo" width="200"/>
 
-The dynamometer is designed to characterise <1kW electric motors, using the VESC MKVI as motor controllers.
+V-Dyno was created as part of a masters group project in 2024/25 at the University of Bristol. 
 
-This Repo contains test results, code etc. pertaining to our GIP creating a desktop dynamometer for <1kW electric motors. It is based on the VESC and python-can projects.
+It contains all neccessary files to recreate our setup, including the design files and UI (User Interface) that allows users to easily run dynamic tests.
+
+The dyno is made possible through the open-source, VESC, python-can, cantools and PyQT projects, thank you all.
 
 ## Getting Started
-To install all development dependencies and how to run an automated test-suite of some kind.
+To install all development dependencies please run:
 
 ```sh
 pip install requirements.txt
 ```
 
 ## Usage example
-To use the GUI, navigate to VescDyno.py and run.
+To use the GUI, navigate to VescDyno.py and click run.
 
-## \CAN
+## Docs
 ### \DANCANServer
 Contains the GUI and CAN control to run the motors and get results
 ### \TeensyTorqueSensor
@@ -33,11 +33,11 @@ Contains data stored in many folders, each representing one output from the osci
 
 ## Meta
 
-Your Name – [LinkedIN]() – danielmuir167@gmail.com
+Daniel Muir – [LinkedIn](https://www.linkedin.com/in/daniel-muir31415/) – danielmuir167@gmail.com
 
 Distributed under the MIT license. See ``LICENSE`` for more information.
 
-[https://github.com/dan17229/GIP2024Dynamometer](https://github.com/dan17229/VDyno)
+[Github page](https://github.com/dan17229/V-Dyno)
 
 ## Contributing
 
