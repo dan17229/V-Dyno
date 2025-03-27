@@ -1,5 +1,6 @@
-# GIP2024Dynamometer
-The VESC DYNO was created as part of a masters group project in 2024/25 at the University of Bristol.
+![Logo](VDyno/GUI/styles/v-dyno-09.jpg)
+# V-dyno
+V-Dyno was created as part of a masters group project in 2024/25 at the University of Bristol.
 
 The dynamometer is designed to characterise <1kW electric motors, using the VESC MKVI as motor controllers, and a decently modular setup to allow you to swap sensors.
 
@@ -22,3 +23,38 @@ This is a jypter notebook overviewing how torque constant was calculated from dr
 
 ### \Back_EMF_Data_Drill
 Contains data stored in many folders, each representing one output from the oscilloscope.
+
+!
+## Usage example
+
+
+## Development setup
+
+To install all development dependencies and how to run an automated test-suite of some kind.
+
+```sh
+pip install requirements.txt
+```
+## Meta
+
+Your Name – [LinkedIN]() – danielmuir167@gmail.com
+
+Distributed under the MIT license. See ``LICENSE`` for more information.
+
+[https://github.com/dan17229/GIP2024Dynamometer](https://github.com/dan17229/VDyno)
+
+## Contributing
+
+1. Fork it (<https://github.com/dan17229/Vdynio/fork>)
+2. Create your feature branch (`git checkout -b feature/fooBar`)
+3. Commit your changes (`git commit -am 'Add some fooBar'`)
+4. Push to the branch (`git push origin feature/fooBar`)
+5. Create a new Pull Request
+
+<!-- Markdown link & img dfn's -->
+[npm-image]: v
+[npm-url]: https://npmjs.org/package/datadog-metrics
+[npm-downloads]: https://img.shields.io/npm/dm/datadog-metrics.svg?style=flat-square
+[travis-image]: https://img.shields.io/travis/dbader/node-datadog-metrics/master.svg?style=flat-square
+[travis-url]: https://travis-ci.org/dbader/node-datadog-metrics
+[wiki]: https://github.com/yourname/yourproject/wiki
