@@ -6,7 +6,7 @@ Featured in "Modern Pyqt - Create GUI Applications for Project Management, Compu
 
 """
 
-style_sheet = """
+StyleSheet = """
     QWidget{
         background-color: #FFFFFF; /* background for main window */
         color: #000000; /* text color */

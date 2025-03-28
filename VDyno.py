@@ -1,10 +1,13 @@
-from itertools import count, islice
+"""
+This file does it all at the minute
+author Daniel Muir <danielmuir167@gmail.com>
+"""
+
 import sys
 
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QPixmap
-
 from numpy import linspace
 from pyqtgraph.Qt import QtGui, QtCore, QtWidgets
 import pyqtgraph as pg
@@ -13,45 +16,18 @@ import can
 import cantools
 import os
 import serial.tools.list_ports
-from GUI.Styles.StyleSheet import style_sheet
-
+from GUI.style_sheet import StyleSheet
 import ctypes
-myappid = 'mycompany.myproduct.subproduct.version' # arbitrary string
+
+from GUI.can_thread import CANCapture
+
+myappid = 'V-dyno' # arbitrary string
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 ## Switch to using white background and black foreground
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-class CANCapture(QObject):
-    V1_status = pyqtSignal(object)
-    V2_status = pyqtSignal(object)
-    TT_status = pyqtSignal(object)
-
-    def __init__(self, parent=None, **kwargs):
-        super().__init__(parent, **kwargs)
-
-    @pyqtSlot()
-    def startThread(self):
-        print("Thread started")
-
-    @pyqtSlot(object, str, int, int)
-    def startReceiving(self, tester):
-        self._running = True
-        print("Receiving started")
-        while self._running:
-            tester.flush_input()
-            status_V1 = tester.expect('VESC_Status1_V1', None, timeout=.01, discard_other_messages=True)
-            status_V2 = tester.expect('VESC_Status1_V1', None, timeout=.01, discard_other_messages=True)
-            status_TT = tester.expect('TEENSY_Status', None, timeout=.01, discard_other_messages=True)
-            if status_V1 is not None:
-                self.V1_status.emit(status_V1)
-            if status_V2 is not None:
-                self.V2_status.emit(status_V2)
-            if status_TT is not None:
-                self.TT_status.emit(status_TT)
-            QtCore.QThread.msleep(10)  # sleep for a short duration to prevent high CPU usage
 
 class Window(QMainWindow):
     requestData = pyqtSignal(object, str, int, int)
@@ -77,7 +53,7 @@ class Window(QMainWindow):
     def initializeUI(self):
         """Initialize the window and display its contents."""
         app.setStyle('WindowsVista')  # Replace 'Windows' with the desired style
-        app.setWindowIcon(QtGui.QIcon('GUI/icon.svg'))
+        app.setWindowIcon(QtGui.QIcon('GUI/images/icon.svg'))
         self.showMaximized()
         self.setMinimumSize(800, 700)
         self.setWindowTitle('VESCdyno')
@@ -148,9 +124,6 @@ class Window(QMainWindow):
         # Create an instance of GraphicsLayoutWidget
         win = pg.GraphicsLayoutWidget()
 
-        # Apply the stylesheet to the GraphicsLayoutWidget
-        win.setStyleSheet(style_sheet)
-
         # Dropdown
         self.dropdown1 = QComboBox()
         self.dropdown1.setFixedWidth(200)
@@ -213,7 +186,7 @@ class Window(QMainWindow):
 
         # Load the image into a QLabel
         svg_label = QLabel()
-        pixmap = QPixmap("GUI/Setup.png")
+        pixmap = QPixmap("GUI/images/setup.png")
         pixmap = pixmap.scaled(400, 400, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         svg_label.setPixmap(pixmap)
         svg_label.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center the image within the label
@@ -397,7 +370,7 @@ class Window(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyleSheet(style_sheet)
+    app.setStyleSheet(StyleSheet)
     window = Window()
     window.show()
     sys.exit(app.exec())
