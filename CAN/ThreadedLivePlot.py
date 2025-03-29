@@ -13,7 +13,7 @@ import can
 import cantools
 import os
 import serial.tools.list_ports
-from GUI.Styles.StyleSheet import style_sheet
+#from GUI.Styles.StyleSheet import style_sheet
 
 import ctypes
 myappid = 'mycompany.myproduct.subproduct.version' # arbitrary string
@@ -107,7 +107,7 @@ class Window(QMainWindow):
         win = pg.GraphicsLayoutWidget()
 
         # Apply the stylesheet to the GraphicsLayoutWidget
-        win.setStyleSheet(style_sheet)
+        #win.setStyleSheet(style_sheet)
 
         # First plot
         self.p1 = win.addPlot(title="M.U.T RPM", row=0, col=1)  # creates empty space for the first plot in the window
@@ -184,7 +184,7 @@ class Window(QMainWindow):
         return com_port
 
     def openCANBus(self):
-        database = cantools.db.load_file("CAN/DANCANSERVER/VESC.dbc")
+        database = cantools.db.load_file("VESC.dbc")
         com_port = self.detectCOMPort()
         can_bus = can.interface.Bus(interface='seeedstudio',
                                     channel=com_port,
@@ -220,7 +220,7 @@ class Window(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyleSheet(style_sheet)
+    #app.setStyleSheet(style_sheet)
     window = Window()
     window.show()
     sys.exit(app.exec())

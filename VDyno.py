@@ -3,14 +3,13 @@ This file does it all at the minute
 author Daniel Muir <danielmuir167@gmail.com>
 """
 
-import sys
+###### Import the required libraries
 
-from PyQt6.QtCore import *
-from PyQt6.QtWidgets import *
+import sys
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread
+from PyQt6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QVBoxLayout, QLabel, QSpinBox, QDoubleSpinBox, QCheckBox, QComboBox, QToolBox, QWidget, QPushButton, QDockWidget
 from PyQt6.QtGui import QPixmap
-from numpy import linspace
-from pyqtgraph.Qt import QtGui, QtCore, QtWidgets
-import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui
 import serial
 import can
 import cantools
@@ -19,31 +18,42 @@ import serial.tools.list_ports
 from GUI.style_sheet import StyleSheet
 import ctypes
 
+###### Import the files we've coded
 from GUI.can_thread import CANCapture
+from GUI.live_plots import LivePlots
 
-myappid = 'V-dyno' # arbitrary string
+###### Make the taskbar icon work (on Windows)
+myappid = "V-dyno"  # arbitrary string
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-## Switch to using white background and black foreground
-pg.setConfigOption('background', 'w')
-pg.setConfigOption('foreground', 'k')
 
+###### Set the working directory to the current directory (easier to find files this way)
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-class Window(QMainWindow):
-    requestData = pyqtSignal(object, str, int, int)
-    tabChanged = pyqtSignal(int)  # Signal to notify when a tab is changed
 
-    def __init__(self, parent=None, **kwargs):
-        super().__init__(parent, **kwargs)
-        # Make it light theme
+class Window(QMainWindow):
+    """Main window for the VESCdyno GUI."""
+
+    requestData = pyqtSignal(
+        object, str, int, int
+    )  # Setup the signal to initialise CAN data capture for later use
+
+    tabChanged = pyqtSignal(
+        int
+    )  # Setup the signal to notify when a tab is changed in UI for later use
+
+    def __init__(self):  # **kwargs could be useful, but not implemented
+        super().__init__()
+
+        # Create a thread to run the CAN bus capture
         self._thread = QThread()
-        self._threaded = CANCapture()
-        self._threaded.V1_status.connect(self.plotV1Graph)
-        self._threaded.V2_status.connect(self.plotV2Graph)
-        self._threaded.TT_status.connect(self.plotTTGraph)
+        self._threaded = CANCapture(self.data_manager)
         self.requestData.connect(self._threaded.startReceiving)
         self._thread.started.connect(self._threaded.startThread)
         self._threaded.moveToThread(self._thread)
+
+        # Connect DataManager signals to graph update methods
+        self.data_manager.dataUpdated.connect(self.onDataUpdated)
+
         self.initializeUI()
         self.setupMenu()
 
@@ -52,11 +62,11 @@ class Window(QMainWindow):
 
     def initializeUI(self):
         """Initialize the window and display its contents."""
-        app.setStyle('WindowsVista')  # Replace 'Windows' with the desired style
-        app.setWindowIcon(QtGui.QIcon('GUI/images/icon.svg'))
+        app.setStyle("WindowsVista")  # Replace 'Windows' with the desired style
+        app.setWindowIcon(QtGui.QIcon("GUI/images/icon.svg"))
         self.showMaximized()
         self.setMinimumSize(800, 700)
-        self.setWindowTitle('VESCdyno')
+        self.setWindowTitle("VESCdyno")
         self.setupWindow()
         self.show()
 
@@ -76,7 +86,10 @@ class Window(QMainWindow):
         self.button_widget.setLayout(button_layout)
 
         # Create a layout for the main window
-        self.main_layout = QHBoxLayout()  # Use horizontal layout to place tools panel on the left
+        self.main_layout = (
+            QHBoxLayout()
+        )  # Use horizontal layout to place tools panel on the left
+        
         self.graph_layout = QVBoxLayout()  # Vertical layout for the graph and buttons
 
         # Add tools_panel as a widget, not a layout
@@ -120,66 +133,14 @@ class Window(QMainWindow):
             self.anim_dock.show()
             self.results_label.show()
 
-    def setupLivePlot(self):
-        # Create an instance of GraphicsLayoutWidget
-        win = pg.GraphicsLayoutWidget()
-
-        # Dropdown
-        self.dropdown1 = QComboBox()
-        self.dropdown1.setFixedWidth(200)
-        self.dropdown1.addItems(["MUT Current", "Option 2", "Option 3"])
-        dropdown1_proxy = QtWidgets.QGraphicsProxyWidget()
-        dropdown1_proxy.setWidget(self.dropdown1)
-        win.addItem(dropdown1_proxy, row=0, col=1)
-
-        self.dropdown2 = QComboBox()
-        self.dropdown2.setFixedWidth(200)
-        self.dropdown2.addItems(["Load motor RPM", "Option B", "Option C"])
-        dropdown2_proxy = QtWidgets.QGraphicsProxyWidget()
-        dropdown2_proxy.setWidget(self.dropdown2)
-        win.addItem(dropdown2_proxy, row=1, col=1)
-
-        self.dropdown3 = QComboBox()
-        self.dropdown3.setFixedWidth(200)
-        self.dropdown3.addItems(["Torque Transducer"])
-        dropdown3_proxy = QtWidgets.QGraphicsProxyWidget()
-        dropdown3_proxy.setWidget(self.dropdown3)
-        win.addItem(dropdown3_proxy, row=2, col=1)
-
-        # First plot
-        self.p1 = win.addPlot(row=0, col=2)
-        self.p1.getAxis('left').setPen(pg.mkPen(color='k', width=2))  # Black left axis with increased width
-        self.p1.getAxis('bottom').setPen(pg.mkPen(color='k', width=2))  # Black bottom axis with increased width
-        self.curve1 = self.p1.plot(pen=pg.mkPen(color='k', width=2))  # Black line with increased width
-
-        # Second plot
-        self.p2 = win.addPlot(row=1, col=2)
-        self.p2.getAxis('left').setPen(pg.mkPen(color='k', width=2))  # Black left axis with increased width
-        self.p2.getAxis('bottom').setPen(pg.mkPen(color='k', width=2))  # Black bottom axis with increased width
-        self.curve2 = self.p2.plot(pen=pg.mkPen(color='k', width=2))  # Black line with increased width
-
-        # Third plot
-        self.p3 = win.addPlot(row=2, col=2)
-        self.p3.getAxis('left').setPen(pg.mkPen(color='k', width=2))  # Black left axis with increased width
-        self.p3.getAxis('bottom').setPen(pg.mkPen(color='k', width=2))  # Black bottom axis with increased width
-        self.curve3 = self.p3.plot(pen=pg.mkPen(color='k', width=2))  # Black line with increased width
-
-        self.windowWidth = 500  # width of the window displaying the curve
-
-        self.Xm = linspace(0, 0, self.windowWidth)  # create array that will contain the relevant time series for plot
-        self.ptr = -self.windowWidth
-        self.Xm2 = linspace(0, 0, self.windowWidth)  # create array that will contain the relevant time series for plot
-        self.ptr2 = -self.windowWidth
-        self.Xm3 = linspace(0, 0, self.windowWidth)  # create array that will contain the relevant time series for plot
-        self.ptr3 = -self.windowWidth
-        return win
-    
-
     def setAnimWindow(self):
         """Set up a window in the bottom-right corner to display the SVG."""
         anim_dock = QDockWidget()
         anim_dock.setWindowTitle("Setup Diagram")
-        anim_dock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea)
+        anim_dock.setAllowedAreas(
+            Qt.DockWidgetArea.BottomDockWidgetArea
+            | Qt.DockWidgetArea.RightDockWidgetArea
+        )
 
         # Disable movement but allow closing
         anim_dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetClosable)
@@ -187,9 +148,16 @@ class Window(QMainWindow):
         # Load the image into a QLabel
         svg_label = QLabel()
         pixmap = QPixmap("GUI/images/setup.png")
-        pixmap = pixmap.scaled(400, 400, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        pixmap = pixmap.scaled(
+            400,
+            400,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
         svg_label.setPixmap(pixmap)
-        svg_label.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center the image within the label
+        svg_label.setAlignment(
+            Qt.AlignmentFlag.AlignCenter
+        )  # Center the image within the label
 
         # Set the QLabel as the widget for the dock
         svg_container = QWidget()
@@ -207,7 +175,7 @@ class Window(QMainWindow):
         self.toggle_animation_act = anim_dock.toggleViewAction()
 
         return anim_dock
-    
+
     def setupStartButton(self):
         # Add start button
         start_button = QPushButton("Start Thread")
@@ -217,18 +185,18 @@ class Window(QMainWindow):
         close_button = QPushButton("Close")
         close_button.clicked.connect(self.stopThread)
         button_layout = QHBoxLayout()
-        
+
         button_layout.addWidget(start_button)
         button_layout.addWidget(close_button)
         return button_layout
-    
+
     def setupMenu(self):
         """Create a simple menu to manage the dock widget."""
         menu_bar = self.menuBar()
         menu_bar.setNativeMenuBar(False)
 
         # Create view menu and add actions
-        view_menu = menu_bar.addMenu('View')
+        view_menu = menu_bar.addMenu("View")
         view_menu.addAction(self.toggle_animation_act)
 
     def setupToolsPanel(self):
@@ -293,40 +261,16 @@ class Window(QMainWindow):
         settings_v_box.addWidget(settings_toolbox, 0, Qt.AlignmentFlag.AlignTop)
 
         return settings_v_box
-    
-    def addresultsLayout(self): 
+
+    def addresultsLayout(self):
         self.results_label = QLabel("results Layout")
         self.results_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.graph_layout.addWidget(self.results_label)
-    
-    def plotV1Graph(self, value):
-        self.Xm[:-1] = self.Xm[1:]                      # shift data in the temporal mean 1 sample left
-        self.Xm[-1] = float(value)                      # vector containing the instantaneous values
-        self.ptr += 1                                   # update x position for displaying the curve
-        self.curve1.setData(self.Xm)                    # set the curve with this data
-        self.curve1.setPos(self.ptr, 0)                 # set x position in the graph to 0
-        QtWidgets.QApplication.processEvents()          # you MUST process the plot now
-    
-    def plotV2Graph(self, value):
-        self.Xm2[:-1] = self.Xm2[1:]                      # shift data in the temporal mean 1 sample left
-        self.Xm2[-1] = float(value)                      # vector containing the instantaneous values
-        self.ptr += 1                                   # update x position for displaying the curve
-        self.curve1.setData(self.Xm2)                    # set the curve with this data
-        self.curve1.setPos(self.ptr, 0)                 # set x position in the graph to 0
-        QtWidgets.QApplication.processEvents()          # you MUST process the plot now
-
-    def plotTTGraph(self, value):
-        self.Xm3[:-1] = self.Xm3[1:]                      # shift data in the temporal mean 1 sample left
-        self.Xm3[-1] = float(value)                      # vector containing the instantaneous values
-        self.ptr += 1                                   # update x position for displaying the curve
-        self.curve1.setData(self.Xm3)                    # set the curve with this data
-        self.curve1.setPos(self.ptr, 0)                 # set x position in the graph to 0
-        QtWidgets.QApplication.processEvents()          # you MUST process the plot now
 
     def detectCOMPort(self):
         ports = list(serial.tools.list_ports.comports())
         for port in ports:
-            if 'USB-SERIAL CH340' in port.description:
+            if "USB-SERIAL CH340" in port.description:
                 com_port = port.device
                 break
         else:
@@ -334,28 +278,27 @@ class Window(QMainWindow):
         return com_port
 
     def openCANBus(self):
-        database = cantools.db.load_file("CAN/DANCANSERVER/VESC.dbc")
+        database = cantools.db.load_file("CAN/VESC.dbc")
         com_port = self.detectCOMPort()
-        can_bus = can.interface.Bus(interface='seeedstudio',
-                                    channel=com_port,
-                                    baudrate=2000000,
-                                    bitrate=500000)
-        tester = cantools.tester.Tester('VESC1', database, can_bus)
+        can_bus = can.interface.Bus(
+            interface="seeedstudio", channel=com_port, baudrate=2000000, bitrate=500000
+        )
+        tester = cantools.tester.Tester("VESC1", database, can_bus)
         tester.start()
         self.can_bus = can_bus  # Store the CAN bus instance
         return tester
 
     def closeCANBus(self):
         try:
-            if hasattr(self, 'can_bus') and self.can_bus is not None:
+            if hasattr(self, "can_bus") and self.can_bus is not None:
                 self.can_bus.shutdown()
         except Exception as e:
-            print(f"Error during CAN bus shutdown")
-    
+            print("Error during CAN bus shutdown")
+
     @pyqtSlot()
     def startThread(self):
         self._thread.start()
-        key = 'Status_RPM_V2'  # example key
+        key = "Status_RPM_V1"  # example key
         windowWidth = self.windowWidth  # example window width
         version = 2  # example version
         tester = self.openCANBus()  # example tester object
@@ -367,6 +310,7 @@ class Window(QMainWindow):
         self._thread.quit()
         self._thread.wait()
         self.closeCANBus()  # Close the CAN bus connection
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

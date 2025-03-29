@@ -3,7 +3,7 @@ This module contains the CANCapture class which is used to capture CAN messages 
 author Daniel Muir <danielmuir167@gmail.com>
 """
 
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt6 import QObject, pyqtSignal, pyqtSlot, QtCore
 
 class CANCapture(QObject):
     V1_status = pyqtSignal(object)
