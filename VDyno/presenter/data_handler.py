@@ -27,44 +27,30 @@ class Presenter:
         self.transducer = TorqueTransducer
         self.view = view
 
-    def handle_add_task(self, event=None) -> None:
-        task = self.view.get_entry_text()
+    def open_connection(self) -> None:
+        try:
+            self.server.open()
+        except Exception as e:
+            print(f"Failed to open connection: {e}")
+            self.view.open_connection_window(self, self.server.com_port)
+
+    def get_current_COM(self) -> None:
+        ports = self.server.list_ports()
+        if ports.type is None:
+            raise Exception("No COM ports found.")
+        else:
+            return ports
+
+    def command_MUT_rpm(self) -> None:
+        self.MUT.set_rpm(self.view.get_rpm())
+
+    def read_MUT_speed(self, event=None) -> None:
+        task = self.view.get_plot_type()
         self.view.clear_entry()
         self.model.add_task(task)
         self.update_task_list()
 
-
-class livePlotThread(QObject):
-    V1_status = pyqtSignal(object)
-    V2_status = pyqtSignal(object)
-    TT_status = pyqtSignal(object)
-
-    def __init__(self, parent=None, **kwargs):
-        super().__init__(parent, **kwargs)
-
-    @pyqtSlot()
-    def startThread(self):
-        print("Thread started")
-
-    @pyqtSlot(object, str, int, int)
-    def startReceiving(self, tester):
-        self._running = True
-        print("Receiving started")
-        while self._running:
-            tester.flush_input()
-            status_V1 = tester.expect(
-                "VESC_Status1_V1", None, timeout=0.01, discard_other_messages=True
-            )
-            status_V2 = tester.expect(
-                "VESC_Status1_V1", None, timeout=0.01, discard_other_messages=True
-            )
-            status_TT = tester.expect(
-                "TEENSY_Status", None, timeout=0.01, discard_other_messages=True
-            )
-            if status_V1 is not None:
-                self.V1_status.emit(status_V1)
-            if status_V2 is not None:
-                self.V2_status.emit(status_V2)
-            if status_TT is not None:
-                self.TT_status.emit(status_TT)
-            QThread.msleep(10)  # sleep for a short duration to prevent high CPU usage
+    def run(self) -> None:
+        self.view.init_ui(self)
+        self.view.mainloop()
+        self.view.show()

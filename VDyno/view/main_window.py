@@ -6,26 +6,53 @@ author Daniel Muir <danielmuir167@gmail.com>
 ###### Import the required libraries
 
 import sys
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread, QObject
 from PyQt6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton
 from pyqtgraph.Qt import QtGui
-import os
-from GUI.style_sheet import StyleSheet
+from style_sheet import StyleSheet
 import ctypes
-
-###### Import the files we've coded
-from GUI.connection_handler import CANCapture, ConnectionHandler
-from GUI.live_plots import LivePlots
-from GUI.tools_panel import ToolsPanel
-from GUI.anim_window import AnimWindow
+from typing import Protocol
+class Presenter(Protocol):
+    def openCANBus(self) -> None: ...
+    def closeCANBus(self) -> None: ...
 
 ###### Make the taskbar icon work (on Windows)
-myappid = "V-dyno"  # arbitrary string
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
-###### Set the working directory to the current directory (easier to find files this way)
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+class livePlotThread(QObject):
+    V1_status = pyqtSignal(object)
+    V2_status = pyqtSignal(object)
+    TT_status = pyqtSignal(object)
+
+    def __init__(self, parent=None, **kwargs):
+        super().__init__(parent, **kwargs)
+
+    @pyqtSlot()
+    def startThread(self):
+        print("Thread started")
+
+    @pyqtSlot(object, str, int, int)
+    def startReceiving(self, tester):
+        self._running = True
+        print("Receiving started")
+        while self._running:
+            tester.flush_input()
+            status_V1 = tester.expect(
+                "VESC_Status1_V1", None, timeout=0.01, discard_other_messages=True
+            )
+            status_V2 = tester.expect(
+                "VESC_Status1_V1", None, timeout=0.01, discard_other_messages=True
+            )
+            status_TT = tester.expect(
+                "TEENSY_Status", None, timeout=0.01, discard_other_messages=True
+            )
+            if status_V1 is not None:
+                self.V1_status.emit(status_V1)
+            if status_V2 is not None:
+                self.V2_status.emit(status_V2)
+            if status_TT is not None:
+                self.TT_status.emit(status_TT)
+            QThread.msleep(10)  # sleep for a short duration to prevent high CPU usage
 
 class Window(QMainWindow):
     """Main window for the VESCdyno GUI."""
@@ -56,6 +83,8 @@ class Window(QMainWindow):
 
     def initializeUI(self):
         """Initialize the window and display its contents."""
+        myappid = "V-dyno"  # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
         app.setStyle("WindowsVista")  # Replace 'Windows' with the desired style
         app.setWindowIcon(QtGui.QIcon("GUI/images/icon.svg"))
         self.showMaximized()
