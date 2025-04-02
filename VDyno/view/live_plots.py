@@ -1,6 +1,10 @@
 """
 This module contains the LivePlots class, which is used to create a live plot of the data
 """
+import pyqtgraph as pg
+from PyQt6 import QtWidgets
+from PyQt6.QtWidgets import QComboBox
+from numpy import linspace
 class LivePlots():
     def __init__(self, parent):
         super().__init__()
@@ -62,6 +66,7 @@ class LivePlots():
         self.ptr2 = -self.windowWidth
         self.Xm3 = linspace(0, 0, self.windowWidth)  # create array that will contain the relevant time series for plot
         self.ptr3 = -self.windowWidth
+        
         return win
     
     def plotV1Graph(self, value):
@@ -89,7 +94,6 @@ class LivePlots():
         QtWidgets.QApplication.processEvents()          # you MUST process the plot now
     
 if __name__ == "__main__":
-    import pyqtgraph as pg
     from PyQt6 import QtWidgets
     from PyQt6.QtWidgets import QComboBox
     from numpy import linspace
