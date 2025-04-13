@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QToolBox, QVBoxLayout, QLabel, QSpinBox, QDoubleSpinBox, QCheckBox, QComboBox
 
 class ToolsPanel():
@@ -76,14 +76,25 @@ if __name__ == "__main__":
     import sys
     from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QToolBox, QSpinBox, QDoubleSpinBox, QLabel, QCheckBox, QComboBox, QWidget
     from style_sheet import StyleSheet
+    from PyQt6.QtCore import pyqtSignal
 
     app = QApplication(sys.argv)
     app.setStyle('WindowsVista')
     app.setStyleSheet(StyleSheet)
 
-    window = QMainWindow()
+    class window(QMainWindow):
 
-    tools_panel = ToolsPanel()
+        tabChanged = pyqtSignal(
+        int
+        )  # Setup the signal to notify when a tab is changed in UI for later use
+
+        def __init__(self):
+            super().__init__()
+            self.show
+
+    trial = window()
+
+    tools_panel = ToolsPanel(trial)
     tools_panel_layout = tools_panel.setupToolsPanel()
 
     # Create a central widget and set the layout
@@ -93,8 +104,8 @@ if __name__ == "__main__":
     main_layout.addLayout(tools_panel_layout)
     central_widget.setLayout(main_layout)
 
-    window.setCentralWidget(central_widget)
-    window.setWindowTitle("Tools Panel")
-    window.show()
+    trial.setCentralWidget(central_widget)
+    trial.setWindowTitle("Tools Panel")
+    trial.show()
 
     sys.exit(app.exec())

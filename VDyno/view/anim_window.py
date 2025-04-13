@@ -6,10 +6,6 @@ from PyQt6.QtGui import QPixmap
 
 class AnimWindow():
 
-    def __init__(self,parent):
-        super().__init__()
-        self.parent=parent
-    
     def setAnimWindow(self):
         """Set animation window"""
         anim_dock = QDockWidget()
@@ -56,14 +52,14 @@ if __name__ == "__main__":
     from PyQt6.QtCore import Qt
     import sys
     import os
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    os.chdir("VDyno")
 
     app = QApplication(sys.argv)
     app.setStyle('WindowsVista')
 
     window = QMainWindow()
 
-    anim = AnimWindow(None)
+    anim = AnimWindow()
     anim_widget = anim.setAnimWindow()
 
     # Create a central widget and set the layout

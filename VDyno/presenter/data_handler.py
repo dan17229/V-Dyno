@@ -22,9 +22,9 @@ class Presenter:
         self, server: CANHandler, motor: Motor, transducer: TorqueTransducer, view: View
     ) -> None:
         self.server = server
-        self.MUT = Motor
-        self.load_motor = Motor
-        self.transducer = TorqueTransducer
+        self.MUT = motor
+        self.load_motor = motor
+        self.transducer = transducer
         self.view = view
 
     def open_connection(self) -> None:

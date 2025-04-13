@@ -1,9 +1,8 @@
 """
-This file does it all at the minute
 author Daniel Muir <danielmuir167@gmail.com>
 """
 
-###### Import the required libraries
+# Import the required libraries
 
 import sys
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread, QObject
@@ -12,11 +11,16 @@ from pyqtgraph.Qt import QtGui
 from style_sheet import StyleSheet
 import ctypes
 from typing import Protocol
-class Presenter(Protocol):
+
+# Import the other windows to display
+
+from anim_window import AnimWindow
+from live_plots import LivePlots
+from tools_panel import ToolsPanel
+
+class Presenter(Protocol): #allow for duck-typing of presenter class
     def openCANBus(self) -> None: ...
     def closeCANBus(self) -> None: ...
-
-###### Make the taskbar icon work (on Windows)
 
 
 class livePlotThread(QObject):
@@ -37,24 +41,18 @@ class livePlotThread(QObject):
         print("Receiving started")
         while self._running:
             tester.flush_input()
-            status_V1 = tester.expect(
-                "VESC_Status1_V1", None, timeout=0.01, discard_other_messages=True
-            )
-            status_V2 = tester.expect(
-                "VESC_Status1_V1", None, timeout=0.01, discard_other_messages=True
-            )
-            status_TT = tester.expect(
-                "TEENSY_Status", None, timeout=0.01, discard_other_messages=True
-            )
-            if status_V1 is not None:
-                self.V1_status.emit(status_V1)
-            if status_V2 is not None:
-                self.V2_status.emit(status_V2)
-            if status_TT is not None:
-                self.TT_status.emit(status_TT)
-            QThread.msleep(10)  # sleep for a short duration to prevent high CPU usage
+            # status_V1 = 
+            # status_V2 = 
+            # status_TT = 
+            # if status_V1 is not None:
+            #     self.V1_status.emit(status_V1)
+            # if status_V2 is not None:
+            #     self.V2_status.emit(status_V2)
+            # if status_TT is not None:
+            #     self.TT_status.emit(status_TT)
+            QThread.msleep(10) 
 
-class Window(QMainWindow):
+class MainWindow(QMainWindow):
     """Main window for the VESCdyno GUI."""
 
     requestData = pyqtSignal(
@@ -65,7 +63,7 @@ class Window(QMainWindow):
         int
     )  # Setup the signal to notify when a tab is changed in UI for later use
 
-    def __init__(self):  # **kwargs could be useful, but not implemented
+    def __init__(self):
         super().__init__()
 
         # Create a thread to run the CAN bus capture
@@ -78,14 +76,16 @@ class Window(QMainWindow):
         self.initializeUI()
         self.setupMenu()
 
-        # Connect the aboutToQuit signal to the stopThread method
+        # Stop the thread once the app is closed
         QApplication.instance().aboutToQuit.connect(self.stopThread)
 
     def initializeUI(self):
         """Initialize the window and display its contents."""
-        myappid = "V-dyno"  # arbitrary string
+        
+        # setup up icon, style, size.
+        myappid = "V-dyno" #arbitrary string as name
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-        app.setStyle("WindowsVista")  # Replace 'Windows' with the desired style
+        app.setStyle("WindowsVista")
         app.setWindowIcon(QtGui.QIcon("GUI/images/icon.svg"))
         self.showMaximized()
         self.setMinimumSize(800, 700)
