@@ -8,15 +8,21 @@ import sys
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread, QObject
 from PyQt6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton
 from pyqtgraph.Qt import QtGui
-from style_sheet import StyleSheet
 import ctypes
 from typing import Protocol
 
 # Import the other windows to display
 
-from anim_window import AnimWindow
-from live_plots import LivePlots
-from tools_panel import ToolsPanel
+
+if __name__ == "__main__":
+    import os
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
+from VDyno.view.style_sheet import StyleSheet
+from VDyno.view.anim_window import AnimWindow
+from VDyno.view.live_plots import PlotWindow
+from VDyno.view.tools_panel import ToolsPanel
+
 
 class Presenter(Protocol): #allow for duck-typing of presenter class
     def openCANBus(self) -> None: ...
@@ -65,10 +71,9 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-
         # Create a thread to run the CAN bus capture
         self._thread = QThread()
-        self._threaded = CANCapture()
+        self._threaded = livePlotThread()
         self.requestData.connect(self._threaded.startReceiving)
         self._thread.started.connect(self._threaded.startThread)
         self._threaded.moveToThread(self._thread)
@@ -83,10 +88,6 @@ class MainWindow(QMainWindow):
         """Initialize the window and display its contents."""
         
         # setup up icon, style, size.
-        myappid = "V-dyno" #arbitrary string as name
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-        app.setStyle("WindowsVista")
-        app.setWindowIcon(QtGui.QIcon("GUI/images/icon.svg"))
         self.showMaximized()
         self.setMinimumSize(800, 700)
         self.setWindowTitle("VESCdyno")
@@ -95,14 +96,14 @@ class MainWindow(QMainWindow):
 
     def setupWindow(self):
         # Create the tools panel
-        tools_panel = ToolsPanel(Window)
+        self.tools_panel = ToolsPanel(self)
 
         # Create Live Plot panel
-        self.live_plot = LivePlots(Window)
+        self.live_plot = PlotWindow()
 
         # Create Animation Window
-        self.anim_dock = AnimWindow(Window)
-        #addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.anim_dock)
+        self.anim_dock = AnimWindow()
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.anim_dock)
 
         # Create Start Button
         button_layout = self.setupStartButton()
@@ -127,7 +128,7 @@ class MainWindow(QMainWindow):
         self.graph_layout.addWidget(self.results_label)
 
         # Add the tools panel and graph layout to the main layout
-        self.main_layout.addLayout(tools_panel)
+        self.main_layout.addLayout(self.tools_panel)
         self.main_layout.addLayout(self.graph_layout)
 
         # Create a central widget and set the layout
@@ -177,7 +178,8 @@ class MainWindow(QMainWindow):
 
         # Create view menu and add actions
         view_menu = menu_bar.addMenu("View")
-        view_menu.addAction(self.toggle_animation_act)
+        view_menu.addAction(self.anim_dock.toggleViewAction())
+        
 
     def addresultsLayout(self):
         self.results_label = QLabel("results Layout")
@@ -200,10 +202,25 @@ class MainWindow(QMainWindow):
         self._thread.wait()
         self.closeCANBus()  # Close the CAN bus connection
 
-
-if __name__ == "__main__":
+def init_UI()-> MainWindow:
     app = QApplication(sys.argv)
     app.setStyleSheet(StyleSheet)
-    window = Window()
-    window.show()
+    myappid = "V-dyno" #arbitrary string as name
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    app.setStyle("WindowsVista")
+    app.setWindowIcon(QtGui.QIcon("VDyno/images/icon.svg"))
+
+    # Create the main window
+    main_window = MainWindow()
+
+    # Show the main window
+    main_window.show()
+
+    # Run the application event loop
     sys.exit(app.exec())
+
+    return main_window
+
+
+if __name__ == "__main__":
+    init_UI()

@@ -1,10 +1,10 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QToolBox, QVBoxLayout, QLabel, QSpinBox, QDoubleSpinBox, QCheckBox, QComboBox
 
-class ToolsPanel():
+class ToolsPanel(QVBoxLayout):
     """A class to set up a permanent tools panel with a QToolBox for motor control, graph settings, and data filters."""
 
-    def __init__(self, parent):
+    def __init__(self, parent: QWidget):
         super().__init__()
         self.parent = parent
         self.setupToolsPanel()
@@ -65,12 +65,9 @@ class ToolsPanel():
 
             # Emit signal when the tab changes
             settings_toolbox.currentChanged.connect(self.parent.tabChanged)
-
+            
             # Set up the layout for the settings toolbox
-            settings_v_box = QVBoxLayout()
-            settings_v_box.addWidget(settings_toolbox, 0, Qt.AlignmentFlag.AlignTop)
-
-            return settings_v_box
+            self.addWidget(settings_toolbox, 0, Qt.AlignmentFlag.AlignTop)
 
 if __name__ == "__main__":
     import sys
@@ -95,13 +92,12 @@ if __name__ == "__main__":
     trial = window()
 
     tools_panel = ToolsPanel(trial)
-    tools_panel_layout = tools_panel.setupToolsPanel()
 
     # Create a central widget and set the layout
     central_widget = QWidget()
     main_layout = QVBoxLayout()
     main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-    main_layout.addLayout(tools_panel_layout)
+    main_layout.addLayout(tools_panel)
     central_widget.setLayout(main_layout)
 
     trial.setCentralWidget(central_widget)

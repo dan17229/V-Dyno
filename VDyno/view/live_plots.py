@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QComboBox
 from numpy import linspace
 
 
-class Plot:
+class Plot():
     """Class handling creation and updating of plot windows"""
 
     def __init__(self, windowWidth: int) -> None:
@@ -46,19 +46,18 @@ class Plot:
         QtWidgets.QApplication.processEvents()  # you MUST process the plot now
 
 
-class PlotWindow:
+class PlotWindow(pg.GraphicsLayoutWidget):
     """Class forming the plot window UI"""
 
-    def __init__(self) -> object:
-        super().__init__()
-        self.window = self.setupLivePlot()
-
-    def setupLivePlot(self) -> object:
-        ## Switch to using white background and black foreground
+    def __init__(self) -> None:
         pg.setConfigOption("background", "w")
         pg.setConfigOption("foreground", "k")
+        super().__init__()
+        self.setupLivePlot()
+
+    def setupLivePlot(self) -> None:
+        ## Switch to using white background and black foreground
         # Create an instance of GraphicsLayoutWidget
-        win = pg.GraphicsLayoutWidget()
 
         windowWidth = 500  # width of the window displaying the curve
 
@@ -76,21 +75,19 @@ class PlotWindow:
 
         # adding the plots to the window
 
-        win.addItem(dropdown1, row=0, col=1)
-        win.addItem(dropdown2, row=1, col=1)
-        win.addItem(dropdown3, row=2, col=1)
+        self.addItem(dropdown1, row=0, col=1)
+        self.addItem(dropdown2, row=1, col=1)
+        self.addItem(dropdown3, row=2, col=1)
 
-        self.p1 = win.addPlot(row=0, col=2)
-        self.p2 = win.addPlot(row=1, col=2)
-        self.p3 = win.addPlot(row=2, col=2)
+        self.p1 = self.addPlot(row=0, col=2)
+        self.p2 = self.addPlot(row=1, col=2)
+        self.p3 = self.addPlot(row=2, col=2)
 
         # make the colours right
 
         self.MUT_plot.plot_settings(self.p1)
         self.Load_plot.plot_settings(self.p2)
         self.TT_plot.plot_settings(self.p3)
-
-        return win
 
 
 if __name__ == "__main__":
@@ -103,7 +100,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyle("WindowsVista")
     live_plot = PlotWindow()
-    live_plot.window.show()
+    live_plot.show()
 
     import random
     import time

@@ -1,11 +1,10 @@
-from VDyno.view.main_window import MainWindow
+from VDyno.view.main_window import init_UI
 from VDyno.presenter.data_handler import Presenter
 from VDyno.model.model import Motor, TorqueTransducer
 from VDyno.model.can_handler import CANHandler
 
-
 def main() -> None:
-    view = MainWindow()
+    view = init_UI()
     try:
         server = CANHandler()
         MUT = Motor(server, 1)

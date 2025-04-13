@@ -3,25 +3,30 @@ This file contains the animation window widget.
 """
 
 from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import QDockWidget, QWidget, QVBoxLayout, QLabel, QApplication, QMainWindow
+from PyQt6.QtCore import Qt
 
-class AnimWindow():
+class AnimWindow(QDockWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.setAnimWindow()
 
     def setAnimWindow(self):
         """Set animation window"""
-        anim_dock = QDockWidget()
-        anim_dock.setWindowTitle("Setup Diagram")
+        self.setWindowTitle("Setup Diagram")
 
-        anim_dock.setAllowedAreas(
+        self.setAllowedAreas(
             Qt.DockWidgetArea.BottomDockWidgetArea
             | Qt.DockWidgetArea.RightDockWidgetArea
         )
 
         # Allow closing
-        anim_dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetClosable)
+        self.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetClosable)
 
         # Load the image into a QLabel
         image_label = QLabel()
-        pixmap = QPixmap("images/setup.png")
+        pixmap = QPixmap("VDyno/images/setup.png")
         pixmap = pixmap.scaled(
             400,
             400,
@@ -39,17 +44,13 @@ class AnimWindow():
         # Set the QLabel as the widget for the dock
         window_container = QWidget()
         window_container.setLayout(window_layout)
-        anim_dock.setWidget(window_container)
+        self.setWidget(window_container)
 
         # Set a fixed height for the dock widget
-        anim_dock.setMinimumHeight(150)  # Adjust the height as needed
-        anim_dock.setMaximumHeight(400)  # Adjust the height as needed
-
-        return anim_dock
+        self.setMinimumHeight(150)  # Adjust the height as needed
+        self.setMaximumHeight(400)  # Adjust the height as needed
     
 if __name__ == "__main__":
-    from PyQt6.QtWidgets import QDockWidget, QWidget, QVBoxLayout, QLabel, QApplication, QMainWindow
-    from PyQt6.QtCore import Qt
     import sys
     import os
     os.chdir("VDyno")
