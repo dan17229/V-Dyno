@@ -1,10 +1,14 @@
 from typing import Protocol
 
+if __name__ == "__main__":
+    import os
+    import sys
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
+from VDyno.model.dummy_can_handler import CANHandler
 class can_server_handler(Protocol):
     def send(self, message: object) -> None:
         """Send a message to the CAN server."""
-
 
 class Motor:
     def __init__(self, can_sever: can_server_handler, vesc_number: int) -> None:
@@ -47,5 +51,4 @@ class Dyno:
         self.torque_transducer = TorqueTransducer(can_server)
         
 if __name__ == "__main__":
-    from can_handler import CANHandler
-    dyno = Dyno(CANHandler())
+    dyno = Dyno()

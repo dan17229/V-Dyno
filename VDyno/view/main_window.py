@@ -56,16 +56,6 @@ class MainWindow(QMainWindow):
         self.show()
         sys.exit(self.app.exec())
 
-    def setup_thread(self):
-        """Create a thread to run the CAN bus capture"""
-        self._thread = QThread()
-        self._threaded = self.presenter()
-        self._threaded.connect(self._threaded.startReceiving)
-        self._thread.started.connect(self._threaded.startThread)
-        self._threaded.moveToThread(self._thread)
-        # Stop the thread once the app is closed
-        QApplication.instance().aboutToQuit.connect(self.stopThread)
-
     def setup_window(self):
         """Create the main window and its components."""
         self.tools_panel = ToolsPanel(self)
@@ -152,6 +142,18 @@ class MainWindow(QMainWindow):
         self.results_label = QLabel("results Layout")
         self.results_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.graph_layout.addWidget(self.results_label)
+
+    def update_MUT_plot(self, value: float) -> None:
+        """Update the MUT plot with the given value."""
+        self.live_plot.MUT_plot.plot(value)
+    
+    def update_load_motor_plot(self, value: float) -> None:
+        """Update the load motor plot with the given value."""
+        self.live_plot.Load_plot.plot(value)
+
+    def update_transducer_plot(self, value: float) -> None:
+        """Update the torque transducer plot with the given value."""
+        self.live_plot.TT_plot.plot(value)
 
 def create_UI() -> MainWindow:
     app = QApplication(sys.argv)
