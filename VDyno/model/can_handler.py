@@ -43,6 +43,20 @@ class CANHandler:
         self.tester = cantools.tester.Tester("VESC1", self.database, _can_bus)
         self.tester.start()
 
+    def open_connection(self) -> None:
+        try:
+            self.server.open()
+        except Exception as e:
+            print(f"Failed to open connection: {e}")
+            self.view.open_connection_window(self, self.server.com_port)
+
+    def get_current_COM(self) -> None:
+        ports = self.server.list_ports()
+        if ports.type is None:
+            raise Exception("No COM ports found.")
+        else:
+            return ports
+
     def send(self, message: object) -> None:
         self.tester.send(message)
 

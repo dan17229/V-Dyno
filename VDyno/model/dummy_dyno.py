@@ -1,9 +1,18 @@
 from typing import Protocol
-
-
+        
 class can_server_handler(Protocol):
     def send(self, message: object) -> None:
         """Send a message to the CAN server."""
+
+class DummyCANHandler:
+    def flush_input(self):
+        pass
+
+    def send(self, message: object) -> None:
+        print(f"Sending message: {message}")
+    
+    def expect(self, message: str, timeout: float) -> dict:
+        return {"speed": 0, "brake_current": 1}
 
 
 class Motor:
@@ -38,11 +47,15 @@ class TorqueTransducer:
     def status(self) -> dict|None:
         self.model.flush_input()
         return self.model.expect('TEENSY_Status', timeout=.01)
-
-if __name__ == "__main__":
-    from can_handler import CANHandler
-
-    can_server = CANHandler()
-    MUT = Motor(can_server, 1)
-    load_motor = Motor(can_server, 2)
-    torque_transducer = TorqueTransducer(can_server)
+    
+class Dyno:
+    def __init__(self) -> None:
+        can_server = DummyCANHandler()
+        self.MUT = Motor(can_server, 1)
+        self.load_motor = Motor(can_server, 2)
+        self.torque_transducer = TorqueTransducer(can_server)
+        
+if __name__ == "__main__":        
+    dyno = Dyno()
+    dyno.MUT.set_rpm(1000)
+    print(dyno.MUT.status)

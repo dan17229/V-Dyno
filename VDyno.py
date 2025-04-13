@@ -1,21 +1,15 @@
-from VDyno.view.main_window import init_UI
-from VDyno.presenter.data_handler import Presenter
-from VDyno.model.model import Motor, TorqueTransducer
-from VDyno.model.can_handler import CANHandler
+from VDyno.view.main_window import create_UI
+#from VDyno.presenter.data_handler import Presenter
+from VDyno.presenter.dummy_presenter import Presenter
+#from VDyno.model.dyno import Dyno
+from VDyno.model.dummy_dyno import Dyno
 
 
 def main() -> None:
-    view = init_UI()
-    try:
-        server = CANHandler()
-        MUT = Motor(server, 1)
-        load_motor = Motor(server, 2)
-        transducer = TorqueTransducer(server)
-        presenter = Presenter(server, MUT, load_motor, transducer, view)
-        presenter.run()
-
-    except Exception as e:
-        print(f"Error: {e}")
+    model = Dyno()
+    view = create_UI()
+    presenter = Presenter(model, view)
+    presenter.run()
 
 
 if __name__ == "__main__":

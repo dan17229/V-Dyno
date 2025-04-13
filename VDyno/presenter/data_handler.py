@@ -1,49 +1,47 @@
 from __future__ import annotations
-
 from typing import Protocol
+# from PyQt6.QtCore import pyqtSignal, QThread, pyqtSlot
 
-from VDyno.model.model import Motor, TorqueTransducer
-from VDyno.model.can_handler import CANHandler
+if __name__ == "__main__":
+    import os
+    import sys
 
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+from VDyno.model.dyno import Dyno
 
 class View(Protocol):
     def init_ui(self, presenter: Presenter) -> None: ...
 
 
 class Presenter:
-    def __init__(
-        self, server: CANHandler, motor: Motor, transducer: TorqueTransducer, view: View
-    ) -> None:
-        self.server = server
-        self.MUT = motor
-        self.load_motor = motor
-        self.transducer = transducer
+    def __init__(self, dyno: Dyno, view: View) -> None:
+        self.dyno = dyno
         self.view = view
-
-    def open_connection(self) -> None:
-        try:
-            self.server.open()
-        except Exception as e:
-            print(f"Failed to open connection: {e}")
-            self.view.open_connection_window(self, self.server.com_port)
-
-    def get_current_COM(self) -> None:
-        ports = self.server.list_ports()
-        if ports.type is None:
-            raise Exception("No COM ports found.")
-        else:
-            return ports
+        self.MUT_key = "rpm"
+        self.load_motor_key = "brake_current"
+        self.transducer_key = "torque"
 
     def command_MUT_rpm(self) -> None:
-        self.MUT.set_rpm(self.view.get_rpm())
+        self.dyno.MUT.set_rpm(self.view.get_rpm())
 
-    def read_MUT_speed(self, event=None) -> None:
-        task = self.view.get_plot_type()
-        self.view.clear_entry()
-        self.model.add_task(task)
-        self.update_task_list()
+    def command_load_brake_current(self) -> None:
+        self.dyno.load_motor.set_brake_current(self.view.get_brake_current())
+
+    def update_MUT_plot(self) -> None:
+        status = self.dyno.MUT.status
+        value = status[self.MUT_key]
+        self.view.update_MUT_plot(value)
+
+    def update_load_motor_plot(self) -> None:
+        status = self.dyno.load_motor.status
+        value = status[self.load_motor_key]
+        self.view.update_load_motor_plot(value)
+
+    def update_transducer_plot(self) -> None:
+        status = self.dyno.torque_transducer.status
+        value = status[self.transducer_key]
+        self.view.update_transducer_plot(value)
 
     def run(self) -> None:
         self.view.init_ui(self)
-        self.view.mainloop()
-        self.view.show()
+        self.update_status()

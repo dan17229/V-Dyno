@@ -6,7 +6,12 @@ import pyqtgraph as pg
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QComboBox
 from numpy import linspace
+from typing import Protocol
 
+class Presenter(Protocol):  # allow for duck-typing of presenter class
+    def plot_MUT_changed(self, index: int) -> None: ...
+    def plot_load_changed(self, index: int) -> None: ...
+    def plot_TT_changed(self, index: int) -> None: ...
 
 class Plot:
     """Class handling creation and updating of plot windows"""
@@ -49,7 +54,8 @@ class Plot:
 class PlotWindow(pg.GraphicsLayoutWidget):
     """Class forming the plot window UI"""
 
-    def __init__(self) -> None:
+    def __init__(self, parent: Presenter) -> None:
+        self.parent = parent
         pg.setConfigOption("background", "w")
         pg.setConfigOption("foreground", "k")
         super().__init__()
@@ -73,6 +79,10 @@ class PlotWindow(pg.GraphicsLayoutWidget):
         )
         dropdown3 = self.TT_plot.setup_dropdown(["Torque Transducer"])
 
+        dropdown1.widget().currentIndexChanged.connect(self.parent.plot_MUT_changed)
+        dropdown2.widget().currentIndexChanged.connect(self.parent.plot_load_changed)
+        dropdown3.widget().currentIndexChanged.connect(self.parent.plot_TT_changed)
+
         # adding the plots to the window
 
         self.addItem(dropdown1, row=0, col=1)
@@ -91,31 +101,24 @@ class PlotWindow(pg.GraphicsLayoutWidget):
 
 
 if __name__ == "__main__":
-    from PyQt6 import QtWidgets
-    from PyQt6.QtWidgets import QComboBox
+    from PyQt6.QtWidgets import QComboBox, QApplication
     from numpy import linspace
     import sys
-    from PyQt6.QtWidgets import QApplication
+    import os
+    import time
+
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+    from VDyno.presenter.dummy_presenter import DummyPresenter
 
     app = QApplication(sys.argv)
     app.setStyle("WindowsVista")
-    live_plot = PlotWindow()
+
+    example = DummyPresenter()
+    live_plot = PlotWindow(example)
     live_plot.show()
 
-    import random
-    import time
-
-    data1 = 0
-    data2 = 0
-    data3 = 0
-
     while True:
-        data1 = data1 + random.randint(-10, 10)
-        data2 = data2 + random.randint(-10, 10)
-        data3 = data3 + random.randint(-10, 10)
-        live_plot.MUT_plot.plot(data1)
-        live_plot.Load_plot.plot(data2)
-        live_plot.TT_plot.plot(data3)
+        live_plot.MUT_plot.plot(example.MUT_speed)
+        live_plot.Load_plot.plot(example.load_speed)
+        live_plot.TT_plot.plot(example.TT_value)
         time.sleep(0.01)
-
-    sys.exit(app.exec())

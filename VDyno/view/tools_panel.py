@@ -74,7 +74,7 @@ class ToolsPanel(QVBoxLayout):
         settings_toolbox.addItem(graph_settings_tab, "Graph Settings")
 
         # Emit signal when the tab changes
-        settings_toolbox.currentChanged.connect(self.parent.tabChanged)
+        settings_toolbox.currentChanged.connect(self.parent.tab_changed)
 
         # Set up the layout for the settings toolbox
         self.addWidget(settings_toolbox, 0, Qt.AlignmentFlag.AlignTop)
@@ -96,6 +96,7 @@ if __name__ == "__main__":
     )
     from style_sheet import StyleSheet
     from PyQt6.QtCore import pyqtSignal
+    from presenter.dummy_presenter import DummyPresenter
 
     app = QApplication(sys.argv)
     app.setStyle("WindowsVista")
