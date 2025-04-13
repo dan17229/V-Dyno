@@ -6,7 +6,15 @@ author Daniel Muir <danielmuir167@gmail.com>
 
 import sys
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QThread, QObject
-from PyQt6.QtWidgets import QMainWindow, QApplication, QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton
+from PyQt6.QtWidgets import (
+    QMainWindow,
+    QApplication,
+    QHBoxLayout,
+    QVBoxLayout,
+    QLabel,
+    QWidget,
+    QPushButton,
+)
 from pyqtgraph.Qt import QtGui
 import ctypes
 from typing import Protocol
@@ -16,6 +24,7 @@ from typing import Protocol
 
 if __name__ == "__main__":
     import os
+
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from VDyno.view.style_sheet import StyleSheet
@@ -24,7 +33,7 @@ from VDyno.view.live_plots import PlotWindow
 from VDyno.view.tools_panel import ToolsPanel
 
 
-class Presenter(Protocol): #allow for duck-typing of presenter class
+class Presenter(Protocol):  # allow for duck-typing of presenter class
     def openCANBus(self) -> None: ...
     def closeCANBus(self) -> None: ...
 
@@ -47,61 +56,55 @@ class livePlotThread(QObject):
         print("Receiving started")
         while self._running:
             tester.flush_input()
-            # status_V1 = 
-            # status_V2 = 
-            # status_TT = 
+            # status_V1 =
+            # status_V2 =
+            # status_TT =
             # if status_V1 is not None:
             #     self.V1_status.emit(status_V1)
             # if status_V2 is not None:
             #     self.V2_status.emit(status_V2)
             # if status_TT is not None:
             #     self.TT_status.emit(status_TT)
-            QThread.msleep(10) 
+            QThread.msleep(10)
+
 
 class MainWindow(QMainWindow):
     """Main window for the VESCdyno GUI."""
 
     requestData = pyqtSignal(
         object, str, int, int
-    )  # Setup the signal to initialise CAN data capture for later use
+    )  # Signal to initialise CAN data capture
 
     tabChanged = pyqtSignal(
         int
-    )  # Setup the signal to notify when a tab is changed in UI for later use
+    )  # Signal to notify when a tab is changed
 
-    def __init__(self):
-        super().__init__()
-        # Create a thread to run the CAN bus capture
+    def init_UI(self) -> None:
+        """Initialize the window and display its contents."""
+        # setup up icon, style, size.
+        #self.presenter = presenter
+        self.showMaximized()
+        self.setMinimumSize(800, 700)
+        self.setWindowTitle("VESCdyno")
+        self.setup_thread()
+        self.setup_window()
+        self.setup_menu()
+        self.show()
+
+    def setup_thread(self):
+        """ Create a thread to run the CAN bus capture """
         self._thread = QThread()
         self._threaded = livePlotThread()
         self.requestData.connect(self._threaded.startReceiving)
         self._thread.started.connect(self._threaded.startThread)
         self._threaded.moveToThread(self._thread)
-
-        self.initializeUI()
-        self.setupMenu()
-
         # Stop the thread once the app is closed
         QApplication.instance().aboutToQuit.connect(self.stopThread)
 
-    def initializeUI(self):
-        """Initialize the window and display its contents."""
-        
-        # setup up icon, style, size.
-        self.showMaximized()
-        self.setMinimumSize(800, 700)
-        self.setWindowTitle("VESCdyno")
-        self.setupWindow()
-        self.show()
-
-    def setupWindow(self):
-        # Create the tools panel
+    def setup_window(self):
+        """Create the main window and its components."""
         self.tools_panel = ToolsPanel(self)
-
-        # Create Live Plot panel
         self.live_plot = PlotWindow()
-
-        # Create Animation Window
         self.anim_dock = AnimWindow()
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.anim_dock)
 
@@ -114,7 +117,7 @@ class MainWindow(QMainWindow):
         self.main_layout = (
             QHBoxLayout()
         )  # Use horizontal layout to place tools panel on the left
-        
+
         self.graph_layout = QVBoxLayout()  # Vertical layout for the graph and buttons
 
         self.graph_layout.addWidget(self.live_plot)
@@ -137,9 +140,9 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         # Connect the tabChanged signal
-        self.tabChanged.connect(self.onTabChanged)
+        self.tabChanged.connect(self.on_tab_change)
 
-    def onTabChanged(self, index):
+    def on_tab_change(self, index):
         """Handle tab changes in the tools panel."""
         for i in range(self.graph_layout.count()):
             item = self.graph_layout.itemAt(i)
@@ -171,7 +174,7 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(close_button)
         return button_layout
 
-    def setupMenu(self):
+    def setup_menu(self):
         """Create a simple menu to manage the dock widget."""
         menu_bar = self.menuBar()
         menu_bar.setNativeMenuBar(False)
@@ -179,7 +182,6 @@ class MainWindow(QMainWindow):
         # Create view menu and add actions
         view_menu = menu_bar.addMenu("View")
         view_menu.addAction(self.anim_dock.toggleViewAction())
-        
 
     def addresultsLayout(self):
         self.results_label = QLabel("results Layout")
@@ -202,10 +204,11 @@ class MainWindow(QMainWindow):
         self._thread.wait()
         self.closeCANBus()  # Close the CAN bus connection
 
-def init_UI()-> MainWindow:
+
+def init_UI() -> MainWindow:
     app = QApplication(sys.argv)
     app.setStyleSheet(StyleSheet)
-    myappid = "V-dyno" #arbitrary string as name
+    myappid = "V-dyno"  # arbitrary string as name
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     app.setStyle("WindowsVista")
     app.setWindowIcon(QtGui.QIcon("VDyno/images/icon.svg"))
@@ -214,7 +217,7 @@ def init_UI()-> MainWindow:
     main_window = MainWindow()
 
     # Show the main window
-    main_window.show()
+    main_window.init_UI()
 
     # Run the application event loop
     sys.exit(app.exec())

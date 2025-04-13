@@ -3,6 +3,7 @@ from VDyno.presenter.data_handler import Presenter
 from VDyno.model.model import Motor, TorqueTransducer
 from VDyno.model.can_handler import CANHandler
 
+
 def main() -> None:
     view = init_UI()
     try:
@@ -15,6 +16,7 @@ def main() -> None:
 
     except Exception as e:
         print(f"Error: {e}")
+
 
 if __name__ == "__main__":
     main()

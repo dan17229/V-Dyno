@@ -9,13 +9,6 @@ from VDyno.model.can_handler import CANHandler
 class View(Protocol):
     def init_ui(self, presenter: Presenter) -> None: ...
 
-    def change_plot_type(self) -> str: ...
-
-    @property
-    def selected_task(self) -> str: ...
-
-    def mainloop(self) -> None: ...
-
 
 class Presenter:
     def __init__(

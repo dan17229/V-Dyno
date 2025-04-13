@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QComboBox
 from numpy import linspace
 
 
-class Plot():
+class Plot:
     """Class handling creation and updating of plot windows"""
 
     def __init__(self, windowWidth: int) -> None:
@@ -110,9 +110,9 @@ if __name__ == "__main__":
     data3 = 0
 
     while True:
-        data1 = data1+random.randint(-10, 10)
-        data2 = data2+random.randint(-10, 10)
-        data3 = data3+random.randint(-10, 10)
+        data1 = data1 + random.randint(-10, 10)
+        data2 = data2 + random.randint(-10, 10)
+        data3 = data3 + random.randint(-10, 10)
         live_plot.MUT_plot.plot(data1)
         live_plot.Load_plot.plot(data2)
         live_plot.TT_plot.plot(data3)
