@@ -40,8 +40,7 @@ StyleSheet = """
 
     QToolBox:tab:selected { /* Style for tabs when selected */
         background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                            stop: 0 #6FC7E8, stop: 0.4 #6CC6E8,
-                            stop: 0.5 #66BBDA, stop: 1.0 #60B9DA);
+                            stop: 0 #58BEA8 stop: 1.0 #323587);
         color: #FFFFFF;
     }
 
@@ -79,6 +78,20 @@ StyleSheet = """
 
     QTabBar:tab:!selected {
         margin-top: 2px; /* Make non-selected tabs look smaller when not selected */
+    }
+
+    QToolBar {
+        background: #D3D3D3; /* Grey background for tool bar */
+        border: none;
+    }
+
+    QToolButton {
+        background: transparent;
+    }
+
+    QWidget#CustomSpacer {
+        background-color: #D3D3D3;
+        border: none;
     }
 
     QWidget#ShortBreak{ /* Short break tab container widget */

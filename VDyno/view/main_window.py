@@ -5,7 +5,7 @@ author Daniel Muir <danielmuir167@gmail.com>
 # Import the required libraries
 
 import sys
-from PyQt6.QtCore import Qt, pyqtSignal, QThread
+from PyQt6.QtCore import Qt, pyqtSignal, QSize
 from PyQt6.QtWidgets import (
     QMainWindow,
     QApplication,
@@ -13,15 +13,20 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QLabel,
     QWidget,
-    QPushButton,
+    QToolBar,
+    QSizePolicy,
+    QComboBox,
 )
+from PyQt6.QtGui import QAction, QIcon
 from pyqtgraph.Qt import QtGui
 import ctypes
 from typing import Protocol
+from functools import partial
 
 # Import the other windows to display
 if __name__ == "__main__":
     import os
+
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from VDyno.view.style_sheet import StyleSheet
@@ -29,15 +34,21 @@ from VDyno.view.anim_window import AnimWindow
 from VDyno.view.live_plots import PlotWindow
 from VDyno.view.tools_panel import ToolsPanel
 
+
 class Presenter(Protocol):  # allow for duck-typing of presenter class
     def openCANBus(self) -> None: ...
     def closeCANBus(self) -> None: ...
+
+
 class MainWindow(QMainWindow):
     """Main window for the VESCdyno GUI."""
+
     tab_changed = pyqtSignal(int)  # Signal to notify when a tab is changed
-    plot_MUT_changed = pyqtSignal(int)  # Signal to notify when desired MUTplot is changed
-    plot_load_changed = pyqtSignal(int) 
-    plot_TT_changed = pyqtSignal(int) 
+    plot_MUT_changed = pyqtSignal(
+        int
+    )  # Signal to notify when desired MUTplot is changed
+    plot_load_changed = pyqtSignal(int)
+    plot_TT_changed = pyqtSignal(int)
 
     def __init__(self, app: QApplication) -> None:
         super().__init__()
@@ -47,13 +58,15 @@ class MainWindow(QMainWindow):
         """Initialize the window and display its contents."""
         # setup up icon, style, size.
         self.presenter = presenter
-        self.showMaximized()
         self.setMinimumSize(800, 700)
         self.setWindowTitle("V-Dyno")
-        #self.setup_thread()
+        self._create_actions()
         self.setup_window()
-        self.setup_menu()
+        self._setup_menu()
+        self._setup_tool_bar()
+        self._connect_actions()
         self.show()
+        self.presenter.start_plots_thread()
         sys.exit(self.app.exec())
 
     def setup_window(self):
@@ -105,48 +118,88 @@ class MainWindow(QMainWindow):
             # Show the original layout
             self.live_plot.show()
             self.anim_dock.show()
-            #self.button_widget.show()
+            # self.button_widget.show()
 
         elif index == 1:  # "Graph Settings" tab
             self.anim_dock.show()
             self.results_label.show()
 
-    def setup_thread_button(self) -> QWidget:
-        # Add start button
-        start_button = QPushButton("Start Thread")
-        start_button.clicked.connect(self.startThread)
+    def _create_actions(self) -> None:
+        self.selected_experiment = "VDyno/experiments/experiment.JSON"
+        # File actions
+        self.start_experiment_action = QAction(QIcon("VDyno/images/icon_dark.svg"), "&Open...", self)
+        self.start_experiment_action.triggered.connect(partial(self.presenter.start_experiment, self.selected_experiment))  # Connect to presenter method
+        self.start_experiment_action.setShortcut("Ctrl+R")
 
-        # Add close button
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(self.stopThread)
-        button_layout = QHBoxLayout()
+    def _connect_actions(self):
+        # Connect Open Recent to dynamically populate it
+        self.open_recent_menu.aboutToShow.connect(self.populate_open_recent)
 
-        button_layout.addWidget(start_button)
-        button_layout.addWidget(close_button)
+    def open_recent_file(self, filename):
+        # Logic for opening a recent file goes here...
+        print(f"<b>{filename}</b> opened")
 
-        button_widget = QWidget()
-        button_widget.setLayout(button_layout)
-
-        return button_widget
-
-    def setup_menu(self):
+    def _setup_menu(self):
         """Create a simple menu to manage the dock widget."""
         menu_bar = self.menuBar()
-        menu_bar.setNativeMenuBar(False)
-
+        # Create file menu and add actions
+        file_menu = menu_bar.addMenu("&File")
+        file_menu.addAction("Open", self.presenter.start_experiment)
+        self.open_recent_menu = file_menu.addMenu("Open Recent")
         # Create view menu and add actions
-        view_menu = menu_bar.addMenu("View")
+        view_menu = menu_bar.addMenu("&View")
         view_menu.addAction(self.anim_dock.toggleViewAction())
+    
+    def populate_open_recent(self):
+        # Step 1. Remove the old options from the menu
+        self.open_recent_menu.clear()
+        # Step 2. Dynamically create the actions
+        actions = []
+        filenames = [f"File-{n}" for n in range(5)]
+        for filename in filenames:
+            action = QAction(filename, self)
+            action.triggered.connect(partial(self.open_recent_file, filename))
+            actions.append(action)
+        # Step 3. Add the actions to the menu
+        self.open_recent_menu.addActions(actions)
+
+    def separator(self, width:int) -> QWidget:
+        separator = QWidget()
+        separator.setObjectName("CustomSpacer")  # Set the object name for stylesheet targeting
+        separator.setFixedWidth(20)  # Set the desired width of the separator
+        return separator
+
+    def _setup_tool_bar(self) -> None:
+        ToolBar = QToolBar("Help", self)
+        self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, ToolBar)
+        ToolBar.setMovable(False)
+        ToolBar.iconSize = QSize(20, 20)
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding,QSizePolicy.Policy.Preferred)
+        spacer.setObjectName("CustomSpacer")  # Set the object name for stylesheet targeting
+        ToolBar.addWidget(spacer)
+        dropdown = QComboBox()
+        dropdown.setFixedWidth(200)
+        experiment_list = self.presenter.get_experiment_list()
+        dropdown.addItems(experiment_list)
+        ToolBar.addWidget(dropdown)
+        ToolBar.addWidget(self.separator(20))
+        ToolBar.addAction(self.start_experiment_action)
+        ToolBar.addWidget(self.separator(20))
 
     def addresultsLayout(self):
         self.results_label = QLabel("results Layout")
         self.results_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.graph_layout.addWidget(self.results_label)
 
+    def change_load_current(self, value: float) -> None:
+        """Change the load motor current."""
+        self.presenter.dyno.load_motor.set_brake_current(value)
+
     def update_MUT_plot(self, value: float) -> None:
         """Update the MUT plot with the given value."""
         self.live_plot.MUT_plot.plot(value)
-    
+
     def update_load_motor_plot(self, value: float) -> None:
         """Update the load motor plot with the given value."""
         self.live_plot.Load_plot.plot(value)
@@ -154,6 +207,7 @@ class MainWindow(QMainWindow):
     def update_transducer_plot(self, value: float) -> None:
         """Update the torque transducer plot with the given value."""
         self.live_plot.TT_plot.plot(value)
+
 
 def create_UI() -> MainWindow:
     app = QApplication(sys.argv)
@@ -168,9 +222,22 @@ def create_UI() -> MainWindow:
 
     return main_window
 
+
 if __name__ == "__main__":
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-    from VDyno.presenter.dummy_presenter import DummyPresenter
-    presenter = DummyPresenter()
+
+    class DummyPresenter:
+        def plot_MUT_changed(self, value: float) -> None: ...
+
+        def plot_load_changed(self, value: float) -> None: ...
+
+        def plot_TT_changed(self, value: float) -> None: ...
+
+        def start_experiment(self, experiment:str) -> None:
+            print(f"Starting {experiment}")
+
+        def get_experiment_list(self) -> list[str]:
+            return ["Experiment 1", "Experiment 2", "Experiment 3"]
+
     view = create_UI()
-    view.init_UI(presenter)
+    view.init_UI(DummyPresenter())

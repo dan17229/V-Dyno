@@ -72,10 +72,10 @@ class PlotWindow(pg.GraphicsLayoutWidget):
         self.TT_plot = Plot(windowWidth)
 
         dropdown1 = self.MUT_plot.setup_dropdown(
-            ["MUT Current", "Option 2", "Option 3"]
+            ["MUT RPM", "MUT current", "MUT duty cycle"]
         )
         dropdown2 = self.Load_plot.setup_dropdown(
-            ["Load motor RPM", "Option B", "Option C"]
+            ["Load motor RPM", "Load current", "Load duty cycle"]
         )
         dropdown3 = self.TT_plot.setup_dropdown(["Torque Transducer"])
 
@@ -84,14 +84,14 @@ class PlotWindow(pg.GraphicsLayoutWidget):
         dropdown3.widget().currentIndexChanged.connect(self.parent.plot_TT_changed)
 
         # adding the plots to the window
-
+        dropdown1.setPos(self.width() / 2 - dropdown1.widget().width() / 2, 0)
         self.addItem(dropdown1, row=0, col=1)
-        self.addItem(dropdown2, row=1, col=1)
-        self.addItem(dropdown3, row=2, col=1)
+        self.addItem(dropdown2, row=2, col=1)
+        self.addItem(dropdown3, row=4, col=1)
 
-        self.p1 = self.addPlot(row=0, col=2)
-        self.p2 = self.addPlot(row=1, col=2)
-        self.p3 = self.addPlot(row=2, col=2)
+        self.p1 = self.addPlot(row=1, col=1)
+        self.p2 = self.addPlot(row=3, col=1)
+        self.p3 = self.addPlot(row=5, col=1)
 
         # make the colours right
 
@@ -108,10 +108,23 @@ if __name__ == "__main__":
     import time
 
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-    from VDyno.presenter.dummy_presenter import DummyPresenter
 
     app = QApplication(sys.argv)
     app.setStyle("WindowsVista")
+
+    class DummyPresenter:
+        def __init__(self) -> None:
+            self.MUT_speed = 0
+            self.load_speed = 0
+            self.TT_value = 0
+        def plot_MUT_changed(self, index: int) -> None:
+            pass
+
+        def plot_load_changed(self, index: int) -> None:
+            pass
+
+        def plot_TT_changed(self, index: int) -> None:
+            pass
 
     example = DummyPresenter()
     live_plot = PlotWindow(example)

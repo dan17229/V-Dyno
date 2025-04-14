@@ -42,6 +42,9 @@ class ToolsPanel(QVBoxLayout):
         load_rpm_input.setSingleStep(0.1)  # Set the step size for duty cycle input
         load_rpm_input.setValue(0)  # Set a default value
 
+        # Connect the valueChanged signal to the parent's change_Load_Speed method
+        load_rpm_input.valueChanged.connect(self.parent.change_load_current)
+
         motor_control_layout.addWidget(MUT_current_label)
         motor_control_layout.addWidget(MUT_current_box)
         motor_control_layout.addWidget(load_rpm_label)
@@ -96,13 +99,12 @@ if __name__ == "__main__":
     )
     from style_sheet import StyleSheet
     from PyQt6.QtCore import pyqtSignal
-    from presenter.dummy_presenter import DummyPresenter
 
     app = QApplication(sys.argv)
     app.setStyle("WindowsVista")
     app.setStyleSheet(StyleSheet)
     class window(QMainWindow):
-        tabChanged = pyqtSignal(
+        tab_changed = pyqtSignal(
             int
         )  # Setup the signal to notify when a tab is changed in UI for later use
 

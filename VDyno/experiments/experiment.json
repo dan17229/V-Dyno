@@ -1,0 +1,35 @@
+{
+    "steps": [
+        {
+            "motor": "MUT",
+            "action": "ramp",
+            "property": "rpm",
+            "start": 0,
+            "end": 3000,
+            "duration": 10
+        },
+        {
+            "motor": "load_motor",
+            "action": "hold",
+            "property": "rpm",
+            "value": 1500,
+            "duration": 10
+        },
+        {
+            "motor": "MUT",
+            "action": "ramp",
+            "property": "rpm",
+            "start": 3000,
+            "end": 0,
+            "duration": 10
+        },
+        {
+            "motor": "load_motor",
+            "action": "ramp",
+            "property": "rpm",
+            "start": 1500,
+            "end": 0,
+            "duration": 10
+        }
+    ]
+}

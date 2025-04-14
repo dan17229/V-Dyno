@@ -22,16 +22,16 @@ class CANHandler:
         self.transducer_torque = 0
 
     def detect_port(self) -> None:
-        ...#print("Detecting COM port...")
+        print("Detecting COM port...")
 
     def get_dbc(self) -> None:
         self.database = cantools.db.load_file("VDyno/model/CAN/VESC.dbc")
 
     def open(self) -> None:
-        ...#print("Opening CAN bus...")
+        print("Opening CAN bus...")
 
     def send(self, message: object) -> None:
-        ...#print(f"Sending message: {message}")
+        print(f"Sending message: {message}")
 
     def flush_input(self) -> None:
         ...#print("Flushing input...")
@@ -39,20 +39,20 @@ class CANHandler:
     def expect(self, message_name: object, timeout: float) -> object|None:
         if message_name == "VESC_Status1_V1":
             self.MUT_speed =  self.MUT_speed + randint(-100, 100)
-            self.MUT_brake_current = self.MUT_brake_current + randint(-100, 100)
-            message = {"rpm": self.MUT_speed, "brake_current": self.MUT_brake_current}
+            self.MUT_brake_current = self.MUT_brake_current + randint(-1, 1)
+            message = {"Status_RPM_V1": self.MUT_speed, "Status_TotalCurrent_V1": self.MUT_brake_current}
         elif message_name == "VESC_Status1_V2":
             self.load_speed =  self.MUT_speed + randint(-100, 100)
-            self.load_brake_current = self.MUT_brake_current + randint(-100, 100)
-            message = {"rpm": self.MUT_speed, "brake_current": self.MUT_brake_current}
+            self.load_brake_current = self.MUT_brake_current + randint(-1, 1)
+            message = {"Status_RPM_V2": self.MUT_speed, "Status_TotalCurrent_V2": self.MUT_brake_current}
         elif message_name == "TEENSY_Status":
             self.transducer_torque =  self.transducer_torque + randint(-100, 100)
-            message = {"torque": self.transducer_torque}
+            message = {"TorqueValue": self.transducer_torque}
 
         return message
 
     def close(self) -> None:
-        ...#print("Closing CAN bus...")
+        print("Closing CAN bus...")
 
 if __name__ == "__main__":
     import os

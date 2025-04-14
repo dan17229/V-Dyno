@@ -14,12 +14,9 @@ def list_ports() -> list:
 
 class CANHandler:
     def __init__(self) -> None:
-        self.com_port = None
-        self.can_bus = None
-        self.tester = None
         self.detect_port()
-        self.database = self.get_dbc()
-        self.open(self.database, self.com_port)
+        self.get_dbc()
+        self.open()
 
     def detect_port(self) -> None:
         ports = list(serial.tools.list_ports.comports())
@@ -31,7 +28,7 @@ class CANHandler:
             raise Exception("USB-SERIAL CH340 not found")
 
     def get_dbc(self) -> None:
-        self.database = cantools.db.load_file("CAN/VESC.dbc")
+        self.database = cantools.db.load_file("VDyno/model/CAN/VESC.dbc")
 
     def open(self) -> None:
         _can_bus = can.interface.Bus(
@@ -57,8 +54,8 @@ class CANHandler:
         else:
             return ports
 
-    def send(self, message: object) -> None:
-        self.tester.send(message)
+    def send(self, message_name: str, signals: dict) -> None:
+        self.tester.send(message_name, signals)
 
     def flush_input(self) -> None:
         self.tester.flush_input()
