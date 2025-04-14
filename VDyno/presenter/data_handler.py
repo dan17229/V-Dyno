@@ -17,8 +17,55 @@ class View(Protocol):
     def init_ui(self, presenter: Presenter) -> None: ...
 
 class WorkerSignals(QObject):
+    finished = pyqtSignal()
     error = pyqtSignal(tuple)
     result = pyqtSignal(object)
+    progress = pyqtSignal(int)
+
+class Worker(QRunnable):
+    '''
+    Worker thread
+
+    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
+
+    :param callback: The function callback to run on this worker thread. Supplied args and
+                     kwargs will be passed through to the runner.
+    :type callback: function
+    :param args: Arguments to pass to the callback function
+    :param kwargs: Keywords to pass to the callback function
+
+    '''
+
+    def __init__(self, fn, *args, **kwargs):
+        super().__init__()
+
+        # Store constructor arguments (re-used for processing)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+
+        # Add the callback to our kwargs
+        self.kwargs['progress_callback'] = self.signals.progress
+
+    @pyqtSlot()
+    def run(self):
+        '''
+        Initialise the runner function with passed args, kwargs.
+        '''
+
+        # Retrieve args/kwargs here; and fire processing using them
+        try:
+            result = self.fn(*self.args, **self.kwargs)
+        except Exception as e:
+            print("Error in worker thread: %s" % e)
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))
+        else:
+            self.signals.result.emit(result)  # Return the result of the processing
+        finally:
+            self.signals.finished.emit()  # Done
 
 class InfiniteWorker(QRunnable):
     def __init__(self, fn, *args, **kwargs):
@@ -83,6 +130,7 @@ class Presenter:
         self.view.update_MUT_plot(self.dyno.MUT.status[self.motor_keys[self.MUT_key]+"1"])
         self.view.update_load_motor_plot(self.dyno.load_motor.status[self.motor_keys[self.load_motor_key]+"2"])
         self.view.update_transducer_plot(self.dyno.torque_transducer.status[self.transducer_keys[self.transducer_key]])
+
         sleep(1/20)
 
     def thread_complete(self):
@@ -103,6 +151,13 @@ class Presenter:
         self.threadpool.start(load_worker)
         self.threadpool.start(TT_worker)
 
+    def start_control_thread(self) -> None:
+        """Start the control thread."""
+        # Create a worker for the control thread
+        control_worker = Worker(self.dyno.control_loop)
+        self.workers.append(control_worker)
+        self.threadpool.start(control_worker)
+
     def start_plots_thread(self) -> None:
         """Update the plots in a separate thread."""
         plot_worker = InfiniteWorker(self.update_plots)
@@ -110,8 +165,11 @@ class Presenter:
         self.threadpool.start(plot_worker)
 
     def start_experiment(self, filename: str) -> None:
+        """Start an experiment in a separate thread."""
         automator = TestAutomator(self.dyno)
-        automator.start_experiment(filename)
+        experiment_worker = InfiniteWorker(automator.start_experiment, filename)
+        self.workers.append(experiment_worker)
+        self.threadpool.start(experiment_worker)
         print("Thread setup complete")
 
     def get_experiment_list(self) -> list[str]:

@@ -30,8 +30,8 @@ class CANHandler:
     def open(self) -> None:
         print("Opening CAN bus...")
 
-    def send(self, message: object) -> None:
-        print(f"Sending message: {message}")
+    def send(self, message_name:str, signals:dict) -> None:
+        print(f"Sending message: {message_name}, signals: {signals}")
 
     def flush_input(self) -> None:
         ...#print("Flushing input...")
