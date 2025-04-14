@@ -8,6 +8,7 @@ if __name__ == "__main__":
 
 from VDyno.model.dummy_can_handler import CANHandler
 
+
 class can_server_handler(Protocol):
     def send(self, message: object) -> None: ...
 
@@ -50,6 +51,7 @@ class TorqueTransducer:
         status = self.model.expect("TEENSY_Status", timeout=0.02)
         if status is not None:
             self.status = status
+
 
 class Dyno:
     def __init__(self) -> None:

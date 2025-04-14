@@ -13,17 +13,21 @@ if __name__ == "__main__":
 from VDyno.model.dyno import Dyno
 from VDyno.presenter.test_automator import TestAutomator
 
+
 class View(Protocol):
     def init_ui(self, presenter: Presenter) -> None: ...
+
 
 class WorkerSignals(QObject):
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
     result = pyqtSignal(object)
     progress = pyqtSignal(int)
+    stop = pyqtSignal()
+
 
 class Worker(QRunnable):
-    '''
+    """
     Worker thread
 
     Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
@@ -34,7 +38,7 @@ class Worker(QRunnable):
     :param args: Arguments to pass to the callback function
     :param kwargs: Keywords to pass to the callback function
 
-    '''
+    """
 
     def __init__(self, fn, *args, **kwargs):
         super().__init__()
@@ -46,13 +50,13 @@ class Worker(QRunnable):
         self.signals = WorkerSignals()
 
         # Add the callback to our kwargs
-        self.kwargs['progress_callback'] = self.signals.progress
+        self.kwargs["progress_callback"] = self.signals.progress
 
     @pyqtSlot()
     def run(self):
-        '''
+        """
         Initialise the runner function with passed args, kwargs.
-        '''
+        """
 
         # Retrieve args/kwargs here; and fire processing using them
         try:
@@ -66,6 +70,11 @@ class Worker(QRunnable):
             self.signals.result.emit(result)  # Return the result of the processing
         finally:
             self.signals.finished.emit()  # Done
+
+    def stop(self):
+        """Stop the worker thread."""
+        pass  # Implement stop!!!!!!
+
 
 class InfiniteWorker(QRunnable):
     def __init__(self, fn, *args, **kwargs):
@@ -93,11 +102,16 @@ class InfiniteWorker(QRunnable):
         """Stop the worker thread."""
         self.running = False
 
+
 class Presenter:
     def __init__(self, dyno: Dyno, view: View) -> None:
         self.dyno = dyno
         self.view = view
-        self.motor_keys = ["Status_RPM_V", "Status_TotalCurrent_V", "Status_DutyCycle_V"]
+        self.motor_keys = [
+            "Status_RPM_V",
+            "Status_TotalCurrent_V",
+            "Status_DutyCycle_V",
+        ]
         self.transducer_keys = ["TorqueValue"]
         self.MUT_key = 0
         self.load_motor_key = 0
@@ -122,16 +136,21 @@ class Presenter:
 
     def object_updater(self, monitor_object: object) -> None:
         monitor_object.update_status()
-        sleep(1/40)
+        sleep(1 / 40)
 
     def update_plots(self) -> None:
-        """Update the plots with the latest values."""
-        print(self.dyno.MUT.status[self.motor_keys[self.MUT_key]+"1"],self.dyno.load_motor.status[self.motor_keys[self.load_motor_key]+"2"],self.dyno.torque_transducer.status[self.transducer_keys[self.transducer_key]])
-        self.view.update_MUT_plot(self.dyno.MUT.status[self.motor_keys[self.MUT_key]+"1"])
-        self.view.update_load_motor_plot(self.dyno.load_motor.status[self.motor_keys[self.load_motor_key]+"2"])
-        self.view.update_transducer_plot(self.dyno.torque_transducer.status[self.transducer_keys[self.transducer_key]])
-
-        sleep(1/20)
+        self.view.update_MUT_plot(
+            self.dyno.MUT.status[self.motor_keys[self.MUT_key] + "1"]
+        )
+        self.view.update_load_motor_plot(
+            self.dyno.load_motor.status[self.motor_keys[self.load_motor_key] + "2"]
+        )
+        self.view.update_transducer_plot(
+            self.dyno.torque_transducer.status[
+                self.transducer_keys[self.transducer_key]
+            ]
+        )
+        sleep(1 / 20)
 
     def thread_complete(self):
         print("THREAD COMPLETE!")
@@ -158,11 +177,10 @@ class Presenter:
         self.workers.append(control_worker)
         self.threadpool.start(control_worker)
 
-    def start_plots_thread(self) -> None:
+    def start_plots(self) -> None:
         """Update the plots in a separate thread."""
-        plot_worker = InfiniteWorker(self.update_plots)
-        self.workers.append(plot_worker)
-        self.threadpool.start(plot_worker)
+        while True:
+            self.update_plots()
 
     def start_experiment(self, filename: str) -> None:
         """Start an experiment in a separate thread."""
@@ -181,7 +199,7 @@ class Presenter:
             for f in os.listdir(experiments_dir)
             if os.path.isfile(os.path.join(experiments_dir, f))
         ]
-    
+
     def stop_all_threads(self) -> None:
         """Stop all running threads."""
         # Stop all workers
@@ -195,6 +213,6 @@ class Presenter:
     def run(self) -> None:
         print("Starting Thread")
         self.start_monitor_thread()
-        QApplication.instance().aboutToQuit.connect(self.stop_all_threads) 
+        QApplication.instance().aboutToQuit.connect(self.stop_all_threads)
         print("Running the presenter")
         self.view.init_UI(self)

@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
         self._setup_tool_bar()
         self._connect_actions()
         self.show()
-        self.presenter.start_plots_thread()
+        self.presenter.start_plots()
         sys.exit(self.app.exec())
 
     def setup_window(self):
@@ -127,8 +127,12 @@ class MainWindow(QMainWindow):
     def _create_actions(self) -> None:
         self.selected_experiment = "VDyno/experiments/experiment.JSON"
         # File actions
-        self.start_experiment_action = QAction(QIcon("VDyno/images/icon_dark.svg"), "&Open...", self)
-        self.start_experiment_action.triggered.connect(partial(self.presenter.start_experiment, self.selected_experiment))  # Connect to presenter method
+        self.start_experiment_action = QAction(
+            QIcon("VDyno/images/icon_dark.svg"), "&Open...", self
+        )
+        self.start_experiment_action.triggered.connect(
+            partial(self.presenter.start_experiment, self.selected_experiment)
+        )  # Connect to presenter method
         self.start_experiment_action.setShortcut("Ctrl+R")
 
     def _connect_actions(self):
@@ -149,7 +153,7 @@ class MainWindow(QMainWindow):
         # Create view menu and add actions
         view_menu = menu_bar.addMenu("&View")
         view_menu.addAction(self.anim_dock.toggleViewAction())
-    
+
     def populate_open_recent(self):
         # Step 1. Remove the old options from the menu
         self.open_recent_menu.clear()
@@ -163,9 +167,11 @@ class MainWindow(QMainWindow):
         # Step 3. Add the actions to the menu
         self.open_recent_menu.addActions(actions)
 
-    def separator(self, width:int) -> QWidget:
+    def separator(self, width: int) -> QWidget:
         separator = QWidget()
-        separator.setObjectName("CustomSpacer")  # Set the object name for stylesheet targeting
+        separator.setObjectName(
+            "CustomSpacer"
+        )  # Set the object name for stylesheet targeting
         separator.setFixedWidth(20)  # Set the desired width of the separator
         return separator
 
@@ -175,8 +181,10 @@ class MainWindow(QMainWindow):
         ToolBar.setMovable(False)
         ToolBar.iconSize = QSize(20, 20)
         spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Policy.Expanding,QSizePolicy.Policy.Preferred)
-        spacer.setObjectName("CustomSpacer")  # Set the object name for stylesheet targeting
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        spacer.setObjectName(
+            "CustomSpacer"
+        )  # Set the object name for stylesheet targeting
         ToolBar.addWidget(spacer)
         dropdown = QComboBox()
         dropdown.setFixedWidth(200)
@@ -233,7 +241,7 @@ if __name__ == "__main__":
 
         def plot_TT_changed(self, value: float) -> None: ...
 
-        def start_experiment(self, experiment:str) -> None:
+        def start_experiment(self, experiment: str) -> None:
             print(f"Starting {experiment}")
 
         def get_experiment_list(self) -> list[str]:

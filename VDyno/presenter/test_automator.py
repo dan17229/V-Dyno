@@ -2,13 +2,15 @@ import json
 from time import sleep
 
 if __name__ == "__main__":
-        import os
-        import sys
-        sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+    import os
+    import sys
+
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from VDyno.model.dyno import Dyno
 
-class ExperimentWorker():
+
+class ExperimentWorker:
     def __init__(self, dyno: Dyno, steps: list) -> None:
         super().__init__()
         self.dyno = dyno
@@ -19,7 +21,9 @@ class ExperimentWorker():
         """Execute a single step for a motor."""
         action = step["action"]
         if action == "ramp":
-            self.ramp(motor, step["property"], step["start"], step["end"], step["duration"])
+            self.ramp(
+                motor, step["property"], step["start"], step["end"], step["duration"]
+            )
         elif action == "hold":
             self.hold(motor, step["property"], step["value"], step["duration"])
 
@@ -67,7 +71,7 @@ class TestAutomator:
 
     def start_experiment(self, experiment_file: str) -> None:
         """Execute an experiment defined in a JSON file."""
-        with open(experiment_file, 'r') as file:
+        with open(experiment_file, "r") as file:
             experiment = json.load(file)
 
         steps = experiment["steps"]
@@ -85,7 +89,7 @@ class TestAutomator:
 
 if __name__ == "__main__":
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-    dyno = Dyno() 
+    dyno = Dyno()
     automator = TestAutomator(dyno)
 
     # Example: Execute an experiment from a JSON file
