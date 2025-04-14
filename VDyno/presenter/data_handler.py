@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
 from VDyno.model.dyno import Dyno
 from VDyno.presenter.test_automator import TestAutomator
-
+from VDyno.presenter.file_saver import FileSaver
 
 class View(Protocol):
     def init_ui(self, presenter: Presenter) -> None: ...
@@ -150,7 +150,7 @@ class Presenter:
                 self.transducer_keys[self.transducer_key]
             ]
         )
-        sleep(1 / 20)
+        sleep(1 / 30)
 
     def thread_complete(self):
         print("THREAD COMPLETE!")
@@ -176,6 +176,15 @@ class Presenter:
         control_worker = Worker(self.dyno.control_loop)
         self.workers.append(control_worker)
         self.threadpool.start(control_worker)
+
+    def start_record_thread(self) -> None:
+        """Start the recording thread."""
+        # Create a worker for the recording thread
+        print("Starting recording thread...")
+        recording = FileSaver(self)
+        record_worker = InfiniteWorker(recording.record_data, self.dyno.MUT.status, self.dyno.load_motor.status, self.dyno.torque_transducer.status)
+        self.workers.append(record_worker)
+        self.threadpool.start(record_worker)
 
     def start_plots(self) -> None:
         """Update the plots in a separate thread."""
@@ -203,6 +212,7 @@ class Presenter:
     def stop_all_threads(self) -> None:
         """Stop all running threads."""
         # Stop all workers
+        print("Stopping all threads...")
         for worker in self.workers:
             worker.stop()
 

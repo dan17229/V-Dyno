@@ -132,8 +132,15 @@ class MainWindow(QMainWindow):
         )
         self.start_experiment_action.triggered.connect(
             partial(self.presenter.start_experiment, self.selected_experiment)
-        )  # Connect to presenter method
+        )  # Connect to presenter 
         self.start_experiment_action.setShortcut("Ctrl+R")
+        self.start_recording_action = QAction(
+            QIcon("VDyno/images/icon_dark.svg"), "&Record...", self
+        )
+        self.start_recording_action.triggered.connect(
+            self.presenter.start_record_thread
+        )
+        self.start_recording_action.setShortcut("Ctrl+Shift+R")
 
     def _connect_actions(self):
         # Connect Open Recent to dynamically populate it
@@ -186,6 +193,8 @@ class MainWindow(QMainWindow):
             "CustomSpacer"
         )  # Set the object name for stylesheet targeting
         ToolBar.addWidget(spacer)
+        ToolBar.addAction(self.start_recording_action)
+        ToolBar.addWidget(self.separator(20))
         dropdown = QComboBox()
         dropdown.setFixedWidth(200)
         experiment_list = self.presenter.get_experiment_list()
