@@ -3,9 +3,8 @@ LivePlots window for plotting realtime data
 """
 
 import pyqtgraph as pg
-from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QComboBox
-from numpy import linspace
+from numpy import zeros
 from typing import Protocol
 
 class Presenter(Protocol):  # allow for duck-typing of presenter class
@@ -13,45 +12,25 @@ class Presenter(Protocol):  # allow for duck-typing of presenter class
     def plot_load_changed(self, index: int) -> None: ...
     def plot_TT_changed(self, index: int) -> None: ...
 
-class Plot:
+def setup_dropdown(options: list) -> object:
+    dropdown = QComboBox()
+    dropdown.setFixedWidth(200)
+    dropdown.addItems(options)
+    return dropdown
+
+    
+class Plot_Data():
     """Class handling creation and updating of plot windows"""
-
-    def __init__(self, windowWidth: int) -> None:
+    def __init__(self, window_width = 200) -> None:
         super().__init__()
-        self.Xm = linspace(
-            0, 0, windowWidth
-        )  # create array that will contain the relevant time series for plot
-        self.ptr = -windowWidth  # the position to plot them in
+        self.Xm = zeros(window_width)  # Array to hold the data for the plot
 
-    def setup_dropdown(self, options: list) -> object:
-        dropdown = QComboBox()
-        dropdown.setFixedWidth(200)
-        dropdown.addItems(options)
-        dropdown_proxy = QtWidgets.QGraphicsProxyWidget()
-        dropdown_proxy.setWidget(dropdown)
-        return dropdown_proxy
+    def extend(self, value) -> None:
+        self.Xm[:-1] = self.Xm[1:]  # Shift data in the temporal mean 1 sample left
+        self.Xm[-1] = float(value)  # Add the new value to the end of the array
+        return self.Xm  # Return the updated array for plotting
 
-    def plot_settings(self, plot: object) -> None:
-        plot.getAxis("left").setPen(
-            pg.mkPen(color="k", width=2)
-        )  # Black left axis with increased width
-        plot.getAxis("bottom").setPen(
-            pg.mkPen(color="k", width=2)
-        )  # Black bottom axis with increased width
-        self.curve = plot.plot(
-            pen=pg.mkPen(color="k", width=2)
-        )  # Black line with increased width
-
-    def plot(self, value) -> None:
-        self.Xm[:-1] = self.Xm[1:]  # shift data in the temporal mean 1 sample left
-        self.Xm[-1] = float(value)  # vector containing the instantaneous values
-        self.ptr += 1  # update x position for displaying the curve
-        self.curve.setData(self.Xm)  # set the curve with this data
-        self.curve.setPos(self.ptr, 0)  # set x position in the graph to 0
-        QtWidgets.QApplication.processEvents()  # you MUST process the plot now
-
-
-class PlotWindow(pg.GraphicsLayoutWidget):
+class PlotWindow(pg.LayoutWidget):
     """Class forming the plot window UI"""
 
     def __init__(self, parent: Presenter) -> None:
@@ -59,79 +38,129 @@ class PlotWindow(pg.GraphicsLayoutWidget):
         pg.setConfigOption("background", "w")
         pg.setConfigOption("foreground", "k")
         super().__init__()
+        self.MUT_index = 0
+        self.Load_index = 0
+        self.TT_index = 0
+        self.setupInputs()
         self.setupLivePlot()
+        self.show()
+
+    def MUT_index_changed(self, index: int) -> None:
+        self.MUT_index=index
+
+    def Load_index_changed(self, index: int) -> None:
+        self.Load_index=index
+
+    def TT_index_changed(self, index: int) -> None:
+        self.TT_index=index
+
+    def setupInputs(self) -> None:
+        dropdown1 = setup_dropdown(["MUT RPM", "MUT current", "MUT duty cycle"])
+        dropdown2 = setup_dropdown(["Load motor RPM", "Load current", "Load duty cycle"])
+        dropdown3 = setup_dropdown(["Torque Transducer"])
+
+        dropdown1.currentIndexChanged.connect(self.MUT_index_changed)
+        dropdown2.currentIndexChanged.connect(self.Load_index_changed)
+        dropdown3.currentIndexChanged.connect(self.TT_index_changed)
+
+        # adding the plots to the window)
+        self.addWidget(dropdown1, row=0, col=0)
+        self.addWidget(dropdown2, row=1, col=0)
+        self.addWidget(dropdown3, row=2, col=0)
 
     def setupLivePlot(self) -> None:
-        ## Switch to using white background and black foreground
-        # Create an instance of GraphicsLayoutWidget
+        view = pg.widgets.RemoteGraphicsView.RemoteGraphicsView()
+        view.pg.setConfigOptions(antialias=True)  # Enable antialiasing for smoother plots
+        self.parent.app.aboutToQuit.connect(view.close)
 
-        windowWidth = 500  # width of the window displaying the curve
+        self.addWidget(view, row=0, col=1, rowspan=3)
 
-        self.MUT_plot = Plot(windowWidth)
-        self.Load_plot = Plot(windowWidth)
-        self.TT_plot = Plot(windowWidth)
+        # Create a GraphicsLayout in the remote process
+        layout = view.pg.GraphicsLayout()
+        view.setCentralItem(layout)
 
-        dropdown1 = self.MUT_plot.setup_dropdown(
-            ["MUT RPM", "MUT current", "MUT duty cycle"]
-        )
-        dropdown2 = self.Load_plot.setup_dropdown(
-            ["Load motor RPM", "Load current", "Load duty cycle"]
-        )
-        dropdown3 = self.TT_plot.setup_dropdown(["Torque Transducer"])
+        # Create PlotItems directly in the remote process
+        self.MUT_plot = layout.addPlot(row=0, col=0)
+        self.Load_plot = layout.addPlot(row=1, col=0)
+        self.TT_plot = layout.addPlot(row=2, col=0)
 
-        dropdown1.widget().currentIndexChanged.connect(self.parent.plot_MUT_changed)
-        dropdown2.widget().currentIndexChanged.connect(self.parent.plot_load_changed)
-        dropdown3.widget().currentIndexChanged.connect(self.parent.plot_TT_changed)
+        # Initialize data arrays for each plot
+        self.MUT_data_rpm = Plot_Data()
+        self.MUT_data_current = Plot_Data()
+        self.MUT_data_duty_cycle = Plot_Data()
+        self.Load_data_rpm = Plot_Data()
+        self.Load_data_current = Plot_Data()
+        self.Load_data_duty_cycle = Plot_Data()
+        self.TT_torque = Plot_Data()
+    
+    def update(self):
+        self.MUT_data_rpm.extend(self.parent.MUT_status["Status_RPM_V1"])
+        self.MUT_data_current.extend(self.parent.MUT_status["Status_TotalCurrent_V1"])
+        self.MUT_data_duty_cycle.extend(self.parent.MUT_status["Status_DutyCycle_V1"])
+        if self.MUT_index == 0:  # MUT RPM
+            self.MUT_plot.plot(self.MUT_data_rpm.Xm, clear=True, _callSync='off')
+        elif self.MUT_index == 1:  # MUT current
+            self.MUT_plot.plot(self.MUT_data_current.Xm, clear=True, _callSync='off')
+        elif self.MUT_index == 2:  # MUT duty cyclea
+            self.MUT_plot.plot(self.MUT_data_duty_cycle.Xm, clear=True, _callSync='off')
 
-        # adding the plots to the window
-        dropdown1.setPos(self.width() / 2 - dropdown1.widget().width() / 2, 0)
-        self.addItem(dropdown1, row=0, col=1)
-        self.addItem(dropdown2, row=2, col=1)
-        self.addItem(dropdown3, row=4, col=1)
+        self.Load_data_rpm.extend(self.parent.load_status["Status_RPM_V2"])
+        self.Load_data_current.extend(self.parent.load_status["Status_TotalCurrent_V2"])
+        self.Load_data_duty_cycle.extend(self.parent.load_status["Status_DutyCycle_V2"])
+        self.Load_plot.plot(self.Load_data_rpm.Xm, clear=True, _callSync='off')
 
-        self.p1 = self.addPlot(row=1, col=1)
-        self.p2 = self.addPlot(row=3, col=1)
-        self.p3 = self.addPlot(row=5, col=1)
-
-        # make the colours right
-
-        self.MUT_plot.plot_settings(self.p1)
-        self.Load_plot.plot_settings(self.p2)
-        self.TT_plot.plot_settings(self.p3)
+        self.TT_torque.extend(self.parent.TT_status["TorqueValue"])
+        self.TT_plot.plot(self.TT_torque.Xm, clear=True, _callSync='off')
 
 
 if __name__ == "__main__":
-    from PyQt6.QtWidgets import QComboBox, QApplication
-    from numpy import linspace
+    from PyQt6.QtWidgets import QApplication
     import sys
     import os
-    import time
+    from random import randint
 
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-
-    app = QApplication(sys.argv)
-    app.setStyle("WindowsVista")
 
     class DummyPresenter:
         def __init__(self) -> None:
             self.MUT_speed = 0
+            self.MUT_brake_current = 0
+            self.MUT_duty_cycle = 0
             self.load_speed = 0
-            self.TT_value = 0
-        def plot_MUT_changed(self, index: int) -> None:
-            pass
+            self.load_brake_current = 0
+            self.load_duty_cycle = 0
+            self.transducer_torque = 0
+            self.MUT_status = {"Status_RPM_V1": self.MUT_speed, "Status_TotalCurrent_V1": self.MUT_brake_current, "Status_DutyCycle_V1": self.MUT_duty_cycle}
+            self.load_status = {"Status_RPM_V2": self.load_speed, "Status_TotalCurrent_V2": self.load_brake_current, "Status_DutyCycle_V2": self.load_duty_cycle}
+            self.TT_status =  {"TorqueValue": self.transducer_torque}
+            self.app = QApplication(sys.argv)
+            self.app.setStyle("WindowsVista")
+        
+        def randomise(self):
+            for key in self.MUT_status:
+                self.MUT_status[key] += randint(-1, 1)
+            for key in self.load_status:
+                self.load_status[key] += randint(-1, 1)
+            for key in self.TT_status:
+                self.TT_status[key] += randint(-1, 1)
+        
+        def plot_MUT_changed(self): ...
+        def plot_load_changed(self): ...
+        def plot_TT_changed(self): ...
 
-        def plot_load_changed(self, index: int) -> None:
-            pass
-
-        def plot_TT_changed(self, index: int) -> None:
-            pass
+        def run(self):
+            sys.exit(self.app.exec())
 
     example = DummyPresenter()
     live_plot = PlotWindow(example)
-    live_plot.show()
 
-    while True:
-        live_plot.MUT_plot.plot(example.MUT_speed)
-        live_plot.Load_plot.plot(example.load_speed)
-        live_plot.TT_plot.plot(example.TT_value)
-        time.sleep(0.01)
+    def update():
+        live_plot.update()
+        example.randomise()
+
+    # Use a QTimer to periodically update the plots
+    timer = pg.QtCore.QTimer()
+    timer.timeout.connect(update)
+    timer.start(10)  # Update every 10 ms
+
+    example.run()

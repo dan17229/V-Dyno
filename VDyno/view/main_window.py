@@ -34,11 +34,9 @@ from VDyno.view.anim_window import AnimWindow
 from VDyno.view.live_plots import PlotWindow
 from VDyno.view.tools_panel import ToolsPanel
 
-
 class Presenter(Protocol):  # allow for duck-typing of presenter class
     def openCANBus(self) -> None: ...
     def closeCANBus(self) -> None: ...
-
 
 class MainWindow(QMainWindow):
     """Main window for the VESCdyno GUI."""
@@ -237,7 +235,7 @@ def create_UI() -> MainWindow:
     # Create the main window
     main_window = MainWindow(app)
 
-    return main_window
+    return main_window,app
 
 
 if __name__ == "__main__":

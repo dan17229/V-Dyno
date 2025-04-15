@@ -1,6 +1,7 @@
 import csv
 from datetime import datetime
 import os
+from time import sleep
 
 class FileSaver:
     def __init__(self, parent):
@@ -11,6 +12,9 @@ class FileSaver:
         :param data3: Dictionary
         """
         self.parent = parent
+        self.data1 = parent.MUT.status
+        self.data2 = parent.load_motor.status
+        self.data3 = parent.torque_transducer.status
         self.file = None
         self.writer = None
 
@@ -32,16 +36,26 @@ class FileSaver:
         headers = list(self.data1.keys()) + list(self.data2.keys()) + list(self.data3.keys())
         self.writer.writerow(headers)
 
-    def record(self):
+    def record(self, data1:dict, data2:dict, data3:dict, stop:bool=False):
         """
         Write the current state of the three dictionaries to the file as a new line.
         """
+        if stop:
+                print("Stopping recording...")
+                return  # Exit the method if stop is True
+        
+        print("Recording...")
+        
+        self.data1 = data1
+        self.data2 = data2
+        self.data3 = data3
         if not self.writer:
             raise ValueError("File is not open. Call 'open' before recording.")
         
         # Write only the values from the dictionaries
-        row = list(self.dyno.MUT.status.values()) + list(self.data2.values()) + list(self.data3.values())
+        row = list(self.data1.values()) + list(self.data2.values()) + list(self.data3.values())
         self.writer.writerow(row)
+        sleep(1/20)
 
     def close(self):
         """

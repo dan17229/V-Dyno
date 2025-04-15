@@ -4,9 +4,9 @@ from VDyno.model.dyno import Dyno
 
 
 def main() -> None:
-    view = create_UI()
+    view, app = create_UI()
     model = Dyno()
-    presenter = Presenter(model, view)
+    presenter = Presenter(model, view, app)
     presenter.run()
 
 

@@ -100,13 +100,15 @@ class InfiniteWorker(QRunnable):
 
     def stop(self):
         """Stop the worker thread."""
+        self.fn(stop=True)  # Call the stop method of the function
         self.running = False
 
 
 class Presenter:
-    def __init__(self, dyno: Dyno, view: View) -> None:
+    def __init__(self, dyno: Dyno, view: View, app:QApplication) -> None:
         self.dyno = dyno
         self.view = view
+        self.app = app
         self.motor_keys = [
             "Status_RPM_V",
             "Status_TotalCurrent_V",
@@ -181,10 +183,12 @@ class Presenter:
         """Start the recording thread."""
         # Create a worker for the recording thread
         print("Starting recording thread...")
-        recording = FileSaver(self)
-        record_worker = InfiniteWorker(recording.record_data, self.dyno.MUT.status, self.dyno.load_motor.status, self.dyno.torque_transducer.status)
+        recording = FileSaver(self.dyno)
+        recording.open()
+        record_worker = InfiniteWorker(recording.record, self.dyno.MUT.status, self.dyno.load_motor.status, self.dyno.torque_transducer.status)
         self.workers.append(record_worker)
         self.threadpool.start(record_worker)
+        print(self.workers)
 
     def start_plots(self) -> None:
         """Update the plots in a separate thread."""
@@ -223,6 +227,6 @@ class Presenter:
     def run(self) -> None:
         print("Starting Thread")
         self.start_monitor_thread()
-        QApplication.instance().aboutToQuit.connect(self.stop_all_threads)
+        self.app.aboutToQuit.connect(self.stop_all_threads)
         print("Running the presenter")
         self.view.init_UI(self)
