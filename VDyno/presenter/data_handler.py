@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Protocol
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QThreadPool, QRunnable
+from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QThreadPool, QRunnable, QTimer
 from PyQt6.QtWidgets import QApplication
 import os
 import sys
@@ -100,12 +100,12 @@ class InfiniteWorker(QRunnable):
 
     def stop(self):
         """Stop the worker thread."""
-        self.fn(stop=True)  # Call the stop method of the function
+        self.fn(None,stop=True)  # Call the stop method of the function
         self.running = False
 
 
 class Presenter:
-    def __init__(self, dyno: Dyno, view: View, app:QApplication) -> None:
+    def __init__(self, dyno: Dyno, view: View, app: QApplication) -> None:
         self.dyno = dyno
         self.view = view
         self.app = app
@@ -120,6 +120,8 @@ class Presenter:
         self.transducer_key = 0
         self.threadpool = QThreadPool()
         self.workers = []  # Keep track of all Worker instances
+        self.timer = QTimer()  # Create a QTimer for periodic updates
+        self.timer.timeout.connect(self.update_plots)  # Connect the timer to the update method
 
     def command_MUT_rpm(self) -> None:
         self.dyno.MUT.set_rpm(self.view.get_rpm())
@@ -136,23 +138,16 @@ class Presenter:
     def plot_TT_changed(self, key: int) -> None:
         self.transducer_key = key
 
-    def object_updater(self, monitor_object: object) -> None:
+    def object_updater(self, monitor_object: object,stop=False) -> None:
+        if stop is True:
+            return
         monitor_object.update_status()
         sleep(1 / 40)
 
+
     def update_plots(self) -> None:
-        self.view.update_MUT_plot(
-            self.dyno.MUT.status[self.motor_keys[self.MUT_key] + "1"]
-        )
-        self.view.update_load_motor_plot(
-            self.dyno.load_motor.status[self.motor_keys[self.load_motor_key] + "2"]
-        )
-        self.view.update_transducer_plot(
-            self.dyno.torque_transducer.status[
-                self.transducer_keys[self.transducer_key]
-            ]
-        )
-        sleep(1 / 30)
+        """Update the plots with the latest data."""
+        self.view.live_plot.update()
 
     def thread_complete(self):
         print("THREAD COMPLETE!")
@@ -191,9 +186,8 @@ class Presenter:
         print(self.workers)
 
     def start_plots(self) -> None:
-        """Update the plots in a separate thread."""
-        while True:
-            self.update_plots()
+        """Start updating the plots."""
+        self.timer.start(1000 // 30)  # Update at 30 FPS (1000 ms / 30)
 
     def start_experiment(self, filename: str) -> None:
         """Start an experiment in a separate thread."""

@@ -8,11 +8,11 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "C:/Users/Administrator/Documents/_GIP/GIP2024Dynamometer/CAN/TeensyTorqueSensor/include",
-                "C:/Users/Administrator/Documents/_GIP/GIP2024Dynamometer/CAN/TeensyTorqueSensor/src",
+                "C:/Users/Administrator/Documents/_GIP/V-Dyno/VDyno/model/CAN/TeensyTorqueSensor/include",
+                "C:/Users/Administrator/Documents/_GIP/V-Dyno/VDyno/model/CAN/TeensyTorqueSensor/src",
                 "C:/Users/Administrator/.platformio/packages/framework-arduinoteensy/libraries/FlexCAN",
                 "C:/Users/Administrator/.platformio/packages/framework-arduinoteensy/cores/teensy3",
-                "C:/Users/Administrator/Documents/_GIP/GIP2024Dynamometer/CAN/TeensyTorqueSensor/.pio/libdeps/teensy36/Unity/src",
+                "C:/Users/Administrator/Documents/_GIP/V-Dyno/VDyno/model/CAN/TeensyTorqueSensor/.pio/libdeps/teensy36/Unity/src",
                 "C:/Users/Administrator/.platformio/packages/framework-arduinoteensy/libraries/ADC",
                 "C:/Users/Administrator/.platformio/packages/framework-arduinoteensy/libraries/AccelStepper/src",
                 "C:/Users/Administrator/.platformio/packages/framework-arduinoteensy/libraries/Adafruit_NeoPixel",
@@ -116,11 +116,11 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "C:/Users/Administrator/Documents/_GIP/GIP2024Dynamometer/CAN/TeensyTorqueSensor/include",
-                    "C:/Users/Administrator/Documents/_GIP/GIP2024Dynamometer/CAN/TeensyTorqueSensor/src",
+                    "C:/Users/Administrator/Documents/_GIP/V-Dyno/VDyno/model/CAN/TeensyTorqueSensor/include",
+                    "C:/Users/Administrator/Documents/_GIP/V-Dyno/VDyno/model/CAN/TeensyTorqueSensor/src",
                     "C:/Users/Administrator/.platformio/packages/framework-arduinoteensy/libraries/FlexCAN",
                     "C:/Users/Administrator/.platformio/packages/framework-arduinoteensy/cores/teensy3",
-                    "C:/Users/Administrator/Documents/_GIP/GIP2024Dynamometer/CAN/TeensyTorqueSensor/.pio/libdeps/teensy36/Unity/src",
+                    "C:/Users/Administrator/Documents/_GIP/V-Dyno/VDyno/model/CAN/TeensyTorqueSensor/.pio/libdeps/teensy36/Unity/src",
                     "C:/Users/Administrator/.platformio/packages/framework-arduinoteensy/libraries/ADC",
                     "C:/Users/Administrator/.platformio/packages/framework-arduinoteensy/libraries/AccelStepper/src",
                     "C:/Users/Administrator/.platformio/packages/framework-arduinoteensy/libraries/Adafruit_NeoPixel",

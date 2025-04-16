@@ -71,6 +71,7 @@ class MainWindow(QMainWindow):
         """Create the main window and its components."""
         self.tools_panel = ToolsPanel(self)
         self.live_plot = PlotWindow(self.presenter)
+        print(type(self.live_plot))
         self.anim_dock = AnimWindow()
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.anim_dock)
 

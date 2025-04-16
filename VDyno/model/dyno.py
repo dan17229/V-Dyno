@@ -6,7 +6,7 @@ if __name__ == "__main__":
 
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from VDyno.model.dummy_can_handler import CANHandler
+from VDyno.model.can_handler import CANHandler
 
 
 class can_server_handler(Protocol):
@@ -17,7 +17,7 @@ class Motor:
     def __init__(self, can_server: can_server_handler, vesc_number: int) -> None:
         self.model = can_server
         self.vesc_number = vesc_number
-        self.status = None
+        self.status = {f"Status_RPM_V{vesc_number}": 0, f"Status_TotalCurrent_V{vesc_number}": 0, f"Status_DutyCycle_V{vesc_number}": 0}
 
     def set_rpm(self, rpm_value: int) -> None:
         message_name = f"VESC_Command_RPM_V{self.vesc_number}"
@@ -44,7 +44,7 @@ class Motor:
 class TorqueTransducer:
     def __init__(self, can_server: can_server_handler) -> None:
         self.model = can_server
-        self.status = None
+        self.status = {"TorqueValue": 0}
 
     def update_status(self) -> None:
         self.model.flush_input()

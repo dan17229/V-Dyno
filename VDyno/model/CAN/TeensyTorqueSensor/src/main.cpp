@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <FlexCAN.h> // Can Bus
+//#include <_Teensy.h> // Teensy specific functions
 
 //------------CAN Variables------------
 CAN_message_t can_MsgTx;
@@ -27,6 +28,7 @@ void setup() {
   // If using enable pins on a transceiver, they need to be set on
   pinMode(2, OUTPUT);
   digitalWrite(2, HIGH);
+  analogReadResolution(12);  // 12 bits = values from 0 to 4095
 }
 
 void loop() {

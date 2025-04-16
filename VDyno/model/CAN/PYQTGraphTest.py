@@ -2,6 +2,7 @@
 from numpy import linspace
 from pyqtgraph.Qt import QtGui, QtCore, QtWidgets
 import pyqtgraph as pg
+
 import serial
 import can
 import cantools

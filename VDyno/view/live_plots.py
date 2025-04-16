@@ -34,10 +34,11 @@ class PlotWindow(pg.LayoutWidget):
     """Class forming the plot window UI"""
 
     def __init__(self, parent: Presenter) -> None:
-        self.parent = parent
         pg.setConfigOption("background", "w")
         pg.setConfigOption("foreground", "k")
         super().__init__()
+        self.parent = parent
+        self.setMinimumHeight(400)
         self.MUT_index = 0
         self.Load_index = 0
         self.TT_index = 0
@@ -73,13 +74,21 @@ class PlotWindow(pg.LayoutWidget):
         view.pg.setConfigOptions(antialias=True)  # Enable antialiasing for smoother plots
         self.parent.app.aboutToQuit.connect(view.close)
 
+        # view = pg.GraphicsLayoutWidget()  # Use GraphicsLayoutWidget for local plots
+        # self.MUT_plot = view.addPlot(row=0, col=0, title="MUT Plot")
+        # self.Load_plot = view.addPlot(row=1, col=0, title="Load Plot")
+        # self.TT_plot = view.addPlot(row=2, col=0, title="Torque Transducer Plot")
+
+        # Add the view to the layout
+        self.addWidget(view)
+
         self.addWidget(view, row=0, col=1, rowspan=3)
 
-        # Create a GraphicsLayout in the remote process
+        # # Create a GraphicsLayout in the remote process
         layout = view.pg.GraphicsLayout()
         view.setCentralItem(layout)
 
-        # Create PlotItems directly in the remote process
+        # # Create PlotItems directly in the remote process
         self.MUT_plot = layout.addPlot(row=0, col=0)
         self.Load_plot = layout.addPlot(row=1, col=0)
         self.TT_plot = layout.addPlot(row=2, col=0)
@@ -94,23 +103,29 @@ class PlotWindow(pg.LayoutWidget):
         self.TT_torque = Plot_Data()
     
     def update(self):
-        self.MUT_data_rpm.extend(self.parent.MUT_status["Status_RPM_V1"])
-        self.MUT_data_current.extend(self.parent.MUT_status["Status_TotalCurrent_V1"])
-        self.MUT_data_duty_cycle.extend(self.parent.MUT_status["Status_DutyCycle_V1"])
+        self.MUT_data_rpm.extend(self.parent.dyno.MUT.status["Status_RPM_V1"])
+        self.MUT_data_current.extend(self.parent.dyno.MUT.status["Status_TotalCurrent_V1"])
+        self.MUT_data_duty_cycle.extend(self.parent.dyno.MUT.status["Status_DutyCycle_V1"])
+        
         if self.MUT_index == 0:  # MUT RPM
-            self.MUT_plot.plot(self.MUT_data_rpm.Xm, clear=True, _callSync='off')
+            self.MUT_plot.plot(self.MUT_data_rpm.Xm, clear=True, _callSync='off', pen='k')
         elif self.MUT_index == 1:  # MUT current
-            self.MUT_plot.plot(self.MUT_data_current.Xm, clear=True, _callSync='off')
+            self.MUT_plot.plot(self.MUT_data_current.Xm, clear=True, _callSync='off', pen='k')
         elif self.MUT_index == 2:  # MUT duty cyclea
-            self.MUT_plot.plot(self.MUT_data_duty_cycle.Xm, clear=True, _callSync='off')
+            self.MUT_plot.plot(self.MUT_data_duty_cycle.Xm, clear=True, _callSync='off', pen='k')
 
-        self.Load_data_rpm.extend(self.parent.load_status["Status_RPM_V2"])
-        self.Load_data_current.extend(self.parent.load_status["Status_TotalCurrent_V2"])
-        self.Load_data_duty_cycle.extend(self.parent.load_status["Status_DutyCycle_V2"])
-        self.Load_plot.plot(self.Load_data_rpm.Xm, clear=True, _callSync='off')
+        self.Load_data_rpm.extend(self.parent.dyno.load_motor.status["Status_RPM_V2"])
+        self.Load_data_current.extend(self.parent.dyno.load_motor.status["Status_TotalCurrent_V2"])
+        self.Load_data_duty_cycle.extend(self.parent.dyno.load_motor.status["Status_DutyCycle_V2"])
+        if self.Load_index == 0:  # Load RPM
+            self.Load_plot.plot(self.Load_data_rpm.Xm, clear=True, _callSync='off', pen='k')
+        elif self.Load_index == 1:
+            self.Load_plot.plot(self.Load_data_current.Xm, clear=True, _callSync='off', pen='k')
+        elif self.Load_index == 2:
+            self.Load_plot.plot(self.Load_data_duty_cycle.Xm, clear=True, _callSync='off', pen='k')
 
-        self.TT_torque.extend(self.parent.TT_status["TorqueValue"])
-        self.TT_plot.plot(self.TT_torque.Xm, clear=True, _callSync='off')
+        self.TT_torque.extend(self.parent.dyno.torque_transducer.status["TorqueValue"])
+        self.TT_plot.plot(self.TT_torque.Xm, clear=True, _callSync='off', pen='k')
 
 
 if __name__ == "__main__":

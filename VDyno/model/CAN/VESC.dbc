@@ -515,7 +515,7 @@ BO_ 2147483656 VESC_Command_DutyCycle_V8: 4 Main_ECU
  SG_ Command_DutyCycle_V8 : 7|32@0- (0.001,0) [-100|100] "%"  Main_ECU
 
 BO_ 2147483673 TEENSY_Status: 2 Vector__XXX
- SG_ TorqueValue : 1|10@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ TorqueValue : 3|12@0+ (1,0) [0|0] "" Vector__XXX
 
 
 
