@@ -36,7 +36,7 @@ class FileSaver:
         headers = list(self.data1.keys()) + list(self.data2.keys()) + list(self.data3.keys())
         self.writer.writerow(headers)
 
-    def record(self, data1:dict, data2:dict, data3:dict, stop:bool=False):
+    def record(self, stop:bool=False):
         """
         Write the current state of the three dictionaries to the file as a new line.
         """
@@ -44,11 +44,9 @@ class FileSaver:
                 print("Stopping recording...")
                 return  # Exit the method if stop is True
         
-        print("Recording...")
-        
-        self.data1 = data1
-        self.data2 = data2
-        self.data3 = data3
+        self.data1 = self.parent.MUT.status
+        self.data2 = self.parent.load_motor.status
+        self.data3 = self.parent.torque_transducer.status
         if not self.writer:
             raise ValueError("File is not open. Call 'open' before recording.")
         
@@ -61,6 +59,7 @@ class FileSaver:
         """
         Close the .csv file.
         """
+        print("Closing file...")
         if self.file:
             self.file.close()
             self.file = None

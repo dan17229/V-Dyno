@@ -99,9 +99,11 @@ class InfiniteWorker(QRunnable):
                 self.signals.error.emit((exctype, value, traceback.format_exc()))
 
     def stop(self):
-        """Stop the worker thread."""
-        self.fn(None,stop=True)  # Call the stop method of the function
-        self.running = False
+            """Stop the worker thread."""
+            if "stop" in self._kwargs:
+                self._kwargs["stop"] = True
+            self.running = False  # Set the running flag to False
+            # If the function supports a stop mechanism, pass the stop flag
 
 
 class Presenter:
@@ -118,16 +120,19 @@ class Presenter:
         self.MUT_key = 0
         self.load_motor_key = 0
         self.transducer_key = 0
+        self.desired_MUT_current = 0
+        self.desired_load_rpm = 0
         self.threadpool = QThreadPool()
         self.workers = []  # Keep track of all Worker instances
         self.timer = QTimer()  # Create a QTimer for periodic updates
         self.timer.timeout.connect(self.update_plots)  # Connect the timer to the update method
 
-    def command_MUT_rpm(self) -> None:
-        self.dyno.MUT.set_rpm(self.view.get_rpm())
-
-    def command_load_brake_current(self) -> None:
-        self.dyno.load_motor.set_brake_current(self.view.get_brake_current())
+    def control_motors(self, blank=False, stop = False) -> None:
+        if stop is True:
+            return
+        self.dyno.MUT.set_current(self.desired_MUT_current)
+        self.dyno.load_motor.set_rpm(self.desired_load_rpm)
+        sleep(1 / 40)  # Sleep for a short duration to avoid busy waiting
 
     def plot_MUT_changed(self, key: int) -> None:
         self.MUT_key = key
@@ -144,7 +149,6 @@ class Presenter:
         monitor_object.update_status()
         sleep(1 / 40)
 
-
     def update_plots(self) -> None:
         """Update the plots with the latest data."""
         self.view.live_plot.update()
@@ -158,14 +162,16 @@ class Presenter:
         MUT_worker = InfiniteWorker(self.object_updater, self.dyno.MUT)
         load_worker = InfiniteWorker(self.object_updater, self.dyno.load_motor)
         TT_worker = InfiniteWorker(self.object_updater, self.dyno.torque_transducer)
+        control_worker = InfiniteWorker(self.control_motors)
 
         # Keep track of workers
-        self.workers.extend([MUT_worker, load_worker, TT_worker])
+        self.workers.extend([MUT_worker, load_worker, TT_worker, control_worker])
 
         # Start workers
         self.threadpool.start(MUT_worker)
         self.threadpool.start(load_worker)
         self.threadpool.start(TT_worker)
+        self.threadpool.start(control_worker)
 
     def start_control_thread(self) -> None:
         """Start the control thread."""
@@ -176,11 +182,10 @@ class Presenter:
 
     def start_record_thread(self) -> None:
         """Start the recording thread."""
-        # Create a worker for the recording thread
         print("Starting recording thread...")
         recording = FileSaver(self.dyno)
         recording.open()
-        record_worker = InfiniteWorker(recording.record, self.dyno.MUT.status, self.dyno.load_motor.status, self.dyno.torque_transducer.status)
+        record_worker = InfiniteWorker(recording.record)
         self.workers.append(record_worker)
         self.threadpool.start(record_worker)
         print(self.workers)
@@ -191,7 +196,7 @@ class Presenter:
 
     def start_experiment(self, filename: str) -> None:
         """Start an experiment in a separate thread."""
-        automator = TestAutomator(self.dyno)
+        automator = TestAutomator(self.view)
         experiment_worker = InfiniteWorker(automator.start_experiment, filename)
         self.workers.append(experiment_worker)
         self.threadpool.start(experiment_worker)

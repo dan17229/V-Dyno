@@ -208,22 +208,11 @@ class MainWindow(QMainWindow):
         self.results_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.graph_layout.addWidget(self.results_label)
 
-    def change_load_current(self, value: float) -> None:
-        """Change the load motor current."""
-        self.presenter.dyno.load_motor.set_brake_current(value)
+    def change_MUT_current(self, value):
+        self.presenter.desired_MUT_current = value
 
-    def update_MUT_plot(self, value: float) -> None:
-        """Update the MUT plot with the given value."""
-        self.live_plot.MUT_plot.plot(value)
-
-    def update_load_motor_plot(self, value: float) -> None:
-        """Update the load motor plot with the given value."""
-        self.live_plot.Load_plot.plot(value)
-
-    def update_transducer_plot(self, value: float) -> None:
-        """Update the torque transducer plot with the given value."""
-        self.live_plot.TT_plot.plot(value)
-
+    def change_load_rpm(self, value):   
+        self.presenter.desired_load_rpm = value
 
 def create_UI() -> MainWindow:
     app = QApplication(sys.argv)

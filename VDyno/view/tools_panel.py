@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QWidget,
     QToolBox,
@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QDoubleSpinBox,
     QCheckBox,
     QComboBox,
+    QMainWindow,
 )
 
 
@@ -30,20 +31,22 @@ class ToolsPanel(QVBoxLayout):
         motor_control_layout = QVBoxLayout()
         motor_control_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        MUT_current_label = QLabel("Motor 1 RPM:")
-        MUT_current_box = QSpinBox()
-        MUT_current_box.setRange(0, 1000)  # Set the range for RPM input
-        MUT_current_box.setSingleStep(10)  # Set the step size for duty cycle input
+        MUT_current_label = QLabel("Motor 1 current:")
+        MUT_current_box = QDoubleSpinBox()
+        MUT_current_box.setRange(-5.0, 5.0)  # Set the range for RPM input
+        MUT_current_box.setSingleStep(0.1)  # Set the step size for duty cycle input
         MUT_current_box.setValue(0)  # Set a default value
 
-        load_rpm_label = QLabel("Motor 2 brake current:")
-        load_rpm_input = QDoubleSpinBox()
-        load_rpm_input.setRange(-5.0, 5.0)  # Set the range for duty cycle input
-        load_rpm_input.setSingleStep(0.1)  # Set the step size for duty cycle input
+        MUT_current_box.valueChanged.connect(self.parent.change_MUT_current)
+
+        load_rpm_label = QLabel("Motor 2 rpm:")
+        load_rpm_input = QSpinBox()
+        load_rpm_input.setRange(0, 10000)  # Set the range for duty cycle input
+        load_rpm_input.setSingleStep(100)  # Set the step size for duty cycle input
         load_rpm_input.setValue(0)  # Set a default value
 
         # Connect the valueChanged signal to the parent's change_Load_Speed method
-        load_rpm_input.valueChanged.connect(self.parent.change_load_current)
+        load_rpm_input.valueChanged.connect(self.parent.change_load_rpm)
 
         motor_control_layout.addWidget(MUT_current_label)
         motor_control_layout.addWidget(MUT_current_box)
@@ -82,35 +85,27 @@ class ToolsPanel(QVBoxLayout):
         # Set up the layout for the settings toolbox
         self.addWidget(settings_toolbox, 0, Qt.AlignmentFlag.AlignTop)
 
-
 if __name__ == "__main__":
     import sys
-    from PyQt6.QtWidgets import (
-        QApplication,
-        QMainWindow,
-        QVBoxLayout,
-        QToolBox,
-        QSpinBox,
-        QDoubleSpinBox,
-        QLabel,
-        QCheckBox,
-        QComboBox,
-        QWidget,
-    )
+    from PyQt6.QtWidgets import QApplication
     from style_sheet import StyleSheet
-    from PyQt6.QtCore import pyqtSignal
+
+    class window(QMainWindow):
+        tab_changed = pyqtSignal(int)  # Signal for tab changes
+
+        def __init__(self):
+            super().__init__()
+        
+        def change_MUT_current(self, value):
+            print(f"MUT current changed to: {value}")
+
+        def change_load_rpm(self, value):   
+            print(f"Load RPM changed to: {value}")
+
 
     app = QApplication(sys.argv)
     app.setStyle("WindowsVista")
     app.setStyleSheet(StyleSheet)
-    class window(QMainWindow):
-        tab_changed = pyqtSignal(
-            int
-        )  # Setup the signal to notify when a tab is changed in UI for later use
-
-        def __init__(self):
-            super().__init__()
-            self.show
 
     trial = window()
 
