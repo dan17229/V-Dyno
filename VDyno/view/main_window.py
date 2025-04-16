@@ -124,14 +124,11 @@ class MainWindow(QMainWindow):
             self.results_label.show()
 
     def _create_actions(self) -> None:
-        self.selected_experiment = "VDyno/experiments/experiment.JSON"
-        # File actions
+        self.selected_experiment = "experiment"
         self.start_experiment_action = QAction(
             QIcon("VDyno/images/icon_dark.svg"), "&Open...", self
         )
-        self.start_experiment_action.triggered.connect(
-            partial(self.presenter.start_experiment, self.selected_experiment)
-        )  # Connect to presenter 
+        self.start_experiment_action.triggered.connect(self.presenter.start_experiment)# Connect to presenter 
         self.start_experiment_action.setShortcut("Ctrl+R")
         self.start_recording_action = QAction(
             QIcon("VDyno/images/icon_dark.svg"), "&Record...", self
@@ -196,6 +193,7 @@ class MainWindow(QMainWindow):
         ToolBar.addWidget(self.separator(20))
         dropdown = QComboBox()
         dropdown.setFixedWidth(200)
+        dropdown.currentTextChanged.connect(lambda text: setattr(self, 'selected_experiment', text))
         experiment_list = self.presenter.get_experiment_list()
         dropdown.addItems(experiment_list)
         ToolBar.addWidget(dropdown)

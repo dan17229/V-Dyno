@@ -92,10 +92,13 @@ class ExperimentWorker:
             if not self.running:
                 break
             self.execute_step(step)
+        self.parent.change_MUT_current(0)  # Send MUT current demand
+        self.parent.change_load_rpm(0)  # Send load motor RPM demand
+        return 
 
 
 class TestAutomator:
-    def __init__(self, parent: MainWindow) -> None:
+    def __init__(self, parent: MainWindow, stop=False) -> None:
         self.parent = parent
 
     def start_experiment(self, experiment_file: str) -> None:
@@ -106,6 +109,7 @@ class TestAutomator:
         steps = experiment["steps"]
         worker = ExperimentWorker(self.parent, steps)
         worker.run()
+        return
 
     def _on_experiment_finished(self):
         """Handle experiment completion."""
@@ -118,8 +122,13 @@ class TestAutomator:
 
 if __name__ == "__main__":
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-    dyno = Dyno()
+    class DummyDyno():
+        def change_MUT_current(self, value: float) -> None:
+            print(f"Setting MUT current to {value}")
+        def change_load_rpm(self, value: int) -> None:
+            print(f"Setting load motor RPM to {value}")
+    dyno = DummyDyno()
     automator = TestAutomator(dyno)
 
     # Example: Execute an experiment from a JSON file
-    automator.start_experiment("VDyno/experiments/experiment.json")
+    automator.start_experiment("VDyno/experiments/experiment2.json")

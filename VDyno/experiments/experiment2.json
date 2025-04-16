@@ -1,0 +1,16 @@
+{
+    "steps": [
+        {
+            "action": "hold",
+            "MUT": {
+                "property": "current",
+                "value": 0
+            },
+            "load_motor": {
+                "property": "rpm",
+                "value": 200
+            },
+            "duration": 5
+        }
+    ]
+}

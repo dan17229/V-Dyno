@@ -53,7 +53,7 @@ class FileSaver:
         # Write only the values from the dictionaries
         row = list(self.data1.values()) + list(self.data2.values()) + list(self.data3.values())
         self.writer.writerow(row)
-        sleep(1/20)
+        sleep(1/40)
 
     def close(self):
         """

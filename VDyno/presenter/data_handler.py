@@ -45,12 +45,12 @@ class Worker(QRunnable):
 
         # Store constructor arguments (re-used for processing)
         self.fn = fn
-        self.args = args
-        self.kwargs = kwargs
+        self._args = args
+        self._kwargs = kwargs
         self.signals = WorkerSignals()
 
         # Add the callback to our kwargs
-        self.kwargs["progress_callback"] = self.signals.progress
+        #.kwargs["progress_callback"] = self.signals.progress
 
     @pyqtSlot()
     def run(self):
@@ -60,7 +60,7 @@ class Worker(QRunnable):
 
         # Retrieve args/kwargs here; and fire processing using them
         try:
-            result = self.fn(*self.args, **self.kwargs)
+            result = self.fn(*self._args, **self._kwargs)
         except Exception as e:
             print("Error in worker thread: %s" % e)
             traceback.print_exc()
@@ -72,8 +72,9 @@ class Worker(QRunnable):
             self.signals.finished.emit()  # Done
 
     def stop(self):
-        """Stop the worker thread."""
-        pass  # Implement stop!!!!!!
+        print("Stopping worker thread...")
+        if "stop" in self._kwargs:
+            self._kwargs["stop"] = True
 
 
 class InfiniteWorker(QRunnable):
@@ -194,10 +195,11 @@ class Presenter:
         """Start updating the plots."""
         self.timer.start(1000 // 30)  # Update at 30 FPS (1000 ms / 30)
 
-    def start_experiment(self, filename: str) -> None:
+    def start_experiment(self) -> None:
         """Start an experiment in a separate thread."""
+        filename = f"VDyno/experiments/{self.view.selected_experiment}"
         automator = TestAutomator(self.view)
-        experiment_worker = InfiniteWorker(automator.start_experiment, filename)
+        experiment_worker = Worker(automator.start_experiment, filename)
         self.workers.append(experiment_worker)
         self.threadpool.start(experiment_worker)
         print("Thread setup complete")
